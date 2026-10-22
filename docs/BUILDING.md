@@ -12,8 +12,8 @@ No remote compiler, Apple signing account/certificate, SDK download or external 
 ```sh
 export SDK=/var/jb/usr/share/SDKs/iPhoneOS.sdk
 bash build.sh
-python3 Tools/validate-package.py packages/com.alsinas.sounddeck_0.2.1_iphoneos-arm64.deb
-sudo dpkg -i packages/com.alsinas.sounddeck_0.2.1_iphoneos-arm64.deb
+python3 Tools/validate-package.py packages/com.alsinas.sounddeck_0.2.2_iphoneos-arm64.deb
+sudo dpkg -i packages/com.alsinas.sounddeck_0.2.2_iphoneos-arm64.deb
 ```
 
 Executables receive local ldid signatures and payload paths are rooted under `/var/jb`; architecture is `iphoneos-arm64`. The normal package does not include scripted UI controls or fixture apps. Build normal after QA before release.
@@ -25,8 +25,8 @@ The local ElleKit substrate alias advertises a rootful path; the build normalize
 ```sh
 bash build.sh --tests
 python3 Tests/run-unit.py
-sudo dpkg -i packages/com.alsinas.sounddeck_0.2.1_qa_iphoneos-arm64.deb \
-  packages/com.alsinas.sounddeck.tests_0.2.1_iphoneos-arm64.deb
+sudo dpkg -i packages/com.alsinas.sounddeck_0.2.2_qa_iphoneos-arm64.deb \
+  packages/com.alsinas.sounddeck.tests_0.2.2_iphoneos-arm64.deb
 python3 Tests/run-device.py
 python3 Tests/run-media.py
 python3 Tests/run-web.py

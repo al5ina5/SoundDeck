@@ -1,0 +1,24 @@
+{
+  "soundDeckVersion": "0.2.2",
+  "device": "iPad7,5",
+  "os": "17.7.8 (21H440)",
+  "humanListeningConfirmed": false,
+  "settingsSheet": {
+    "resetVolumes": "20% / 30% fixture gains restored to 100% / 100%",
+    "bypassEnable": "preference and service global state toggled and restored",
+    "controlCenter": "SoundDeck module identifier removed and restored; marker restored",
+    "diagnostics": "backend version, active rows, process count and bypass state displayed"
+  },
+  "service": {
+    "snapshotThread": true,
+    "sampleDiscoveryDurationMs": 49,
+    "uiFreshnessWindowSeconds": 20
+  },
+  "notRun": [
+    "full 0.2.2 UI automation after SpringBoard/Jetsam interruption",
+    "human listening or acoustic measurement",
+    "calls, Siri, screen lock, headphone/Bluetooth/AirPlay transitions",
+    "Podcasts/Photos/TV/Books/Files playback",
+    "second device or alternate iPadOS version"
+  ]
+}

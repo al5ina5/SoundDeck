@@ -1,10 +1,10 @@
-# Real-device validation — experimental 0.2.1
+# Real-device validation — experimental 0.2.2
 
 Tested directly on **iPad7,5 (iPad 6th generation), A10 arm64, iPadOS 17.7.8 (21H440), rootless palera1n / Procursus / ElleKit 1.2**, October 22, 2026. Compilation, signing, packaging, installation and tests were performed on-device.
 
-0.2.1 changes the app/Control Center UI and adds a licensed test asset; the audio runtime is unchanged from the 0.2.0 baseline. Core PCM and lifecycle figures are retained from that baseline; framework, WebKit and minimalist UI suites were rerun with 0.2.1.
+0.2.2 adds a tap-to-open recovery/settings sheet and moves service snapshots off the main queue while keeping the audio runtime unchanged from the 0.2.1/0.2.0 path. Core PCM, framework, WebKit and lifecycle figures below are retained from the 0.2.1 baseline; the new 0.2.2 settings and service checks are reported separately.
 
-Reports: [RemoteIO integration](reports/integration.json) · [framework adapters](reports/media.json) · [WebKit](reports/web.json) · [UI/Control Center](reports/ui.json) · [package lifecycle](reports/lifecycle.json).
+Reports: [RemoteIO integration](reports/integration.json) · [framework adapters](reports/media.json) · [WebKit](reports/web.json) · [UI/Control Center](reports/ui.json) · [recovery/settings](reports/settings.json) · [package lifecycle](reports/lifecycle.json).
 
 ## Audio evidence and what it means
 
@@ -30,13 +30,54 @@ The lifecycle suite passed service-loss watchdog recovery, package upgrade prese
 
 ## UI and Control Center
 
-The 0.2.1 UI suite drove real UIKit sliders (including zero-volume mute), checked backend gains, light/dark layout, icons, accessibility labels and compact card sizing. The Control Center suite opened/expanded the real CCSupport module, drove two app sliders, checked live backend changes and saved preferences, captured the module and verified dismissal. The system master-volume setter passed in 0.2.0; it was deliberately not changed during the 0.2.1 pass while user playback might be active. These are scripted control actions, not physical touch, animation or VoiceOver testing.
+The 0.2.1 UI suite drove real UIKit sliders (including zero-volume mute), checked backend gains, light/dark layout, icons, accessibility labels and compact card sizing. The Control Center suite opened/expanded the real CCSupport module, drove two app sliders, checked live backend changes and saved preferences, captured the module and verified dismissal. The system master-volume setter passed in 0.2.0; it was deliberately not changed during the 0.2.2 pass while user playback might be active. These are scripted control actions, not physical touch, animation or VoiceOver testing.
 
 Portrait automation received the system error:
 
 > The current windowing mode does not allow for programmatic changes to interface orientation.
 
 Portrait is declared and adaptive layout code is present, but portrait remains unverified. Captures are native layer captures of SoundDeck's own view; they omit system chrome/live blur and do not show a physical Control Center screen.
+
+
+## 0.2.2 recovery/settings and service checks
+
+A tap (or VoiceOver custom action) on the master speaker icon opens a compact sheet with **Bypass/Enable**, **Reset volumes**, **Add/Remove from Control Center**, and **Diagnostics**. These are on-demand only; the normal dashboard remains icon-plus-slider rows.
+
+- **Reset volumes:** with two fixture gains at 20%/30%, the sheet action restored both persisted gains to 1.0/1.0.
+- **Bypass/enable:** the sheet toggled `disabled` in preferences and the service's global disabled state; re-enabling restored the enabled state.
+- **Control Center recovery:** both the app action path and `sdctl cc-remove`/`cc-install` removed and restored only `com.alsinas.sounddeck.cc` in the CCSupport layout; the marker was restored.
+- **Diagnostics:** the sheet reported backend version, active rows, process count and bypass state, with Copy/Done actions.
+- **Service scan:** resolving paths and coalition identity only for fresh audio clients reduced a sampled snapshot from ~15 seconds to ~49 ms. The service now runs snapshots on a dedicated thread; the UI tolerates up to 20 seconds of scheduler delay rather than discarding active rows after 4 seconds.
+- One UI automation attempt was interrupted by SpringBoard/Jetsam under load while launching a second fixture; it is recorded as an environment failure, not a pass.
+
+## Real-app coverage
+
+| App | Result |
+|---|---|
+| Apple Music | **Gain verified** on a non-personal station: 50.9% → 20%, native AVPlayer 0.509 → 0.20, restored. |
+| Safari | **Gain verified** with the stock MP3: 80% → 40%, native AVPlayer 0.80 → 0.40, restored. |
+| Music + Safari | **Not supported as simultaneous playback:** starting Safari stopped Music. A trial category-mix override did not fix it and was reverted. |
+| Podcasts | Launched; onboarding/catalog content was not selected, so no audio path was verified. |
+| TinyDodge / RayGame | Launched; no audible path was detected without game interaction. Not verified. |
+| Photos / TV / Books / Files | Not exercised; no suitable non-personal media/library content was selected. |
+
+## Interruption and route status
+
+- Foreground/background and Control Center presentation were exercised without changing user media where possible.
+- **Calls/Siri, screen lock, headphone jack, Bluetooth, AirPlay and physical route transitions were not tested.** The test session was paused at the user's request; these remain release blockers, not passes.
+- The service-loss watchdog, package upgrade/uninstall and reinstall suites remain from the prior baseline. No 0.2.2 multi-hour soak is claimed.
+
+## Accessibility and human QA
+
+PSI accessibility inspection exposed app icons as non-interactive, sliders with app-specific labels/percent values, and the master icon with a settings custom action. Light/dark and compact card captures were inspected. **No human listening, VoiceOver speech review, physical touch review, full Dynamic Type range or portrait verification was completed.**
+
+## Broader device/OS validation
+
+Still limited to **iPad7,5 / iPadOS 17.7.8 / arm64**. No second device, arm64e process, iPadOS 15/16, or alternate rootless bootstrap was available. The package validator confirms rootless paths and arm64 Mach-O identity only; it does not establish runtime compatibility elsewhere.
+
+## Optional PC-style concurrency research
+
+The in-depth feasibility report is at [pc-style-concurrency-feasibility.md](research/pc-style-concurrency-feasibility.md). Verdict: public-API mixability is app- and timing-specific; a universal interruption suppressor would require private/daemon-level work and is **not recommended** for 0.2.x. No such feature ships.
 
 ## Live manual test result (PSI-controlled)
 
@@ -53,4 +94,4 @@ The included CC BY-SA 4.0 piano MP3 and Safari page remain in `Tests/assets/` fo
 
 ## Not verified
 
-No human listening or acoustic measurement yet; Safari gain A/B with the listener and an active Apple Music test-track transition are pending. YouTube/Spotify/DRM, every third-party app/audio graph, headphones/Bluetooth/AirPlay/headset transitions, incoming-call/Siri recovery, physical touch/VoiceOver, full Dynamic Type, Split View/Slide Over, portrait and multi-hour endurance also remain unverified. The release is still **experimental**. See [compatibility](COMPATIBILITY.md).
+No human listening or acoustic measurement; Podcasts/Photos/TV/Books/Files and commercial/DRM apps were not verified. Headphones/Bluetooth/AirPlay, incoming calls/Siri, screen-lock recovery, physical touch/VoiceOver, full Dynamic Type, Split View/Slide Over, portrait and multi-hour endurance remain unverified. The release is still **experimental**. See [compatibility](COMPATIBILITY.md).

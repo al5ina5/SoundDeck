@@ -11,7 +11,7 @@
 #define SD_STATUS SD_DIR @"/status.plist"
 #define SD_CHANGED "com.alsinas.sounddeck.preferences"
 #define SD_GLOBAL "com.alsinas.sounddeck.global"
-#define SD_VERSION @"0.2.1"
+#define SD_VERSION @"0.2.2"
 static inline uint64_t SDGlobalState(NSDictionary *p);
 // notifyd is the cross-sandbox transport; no file access on audio threads or in clients.
 // config: gain in 0..1000, mute bit 10, enabled bit 11, mix bit 12.
@@ -51,7 +51,7 @@ static inline NSString *SDPathName(unsigned n) {
 BOOL SDWritePrefs(NSDictionary *prefs, NSError **error);
 BOOL SDUpdatePrefs(NSDictionary *changes, NSError **error);
 static inline NSArray<NSDictionary *> *SDActiveApplications(NSDictionary *status) {
-    if(NSDate.date.timeIntervalSince1970-[status[@"timestamp"] doubleValue]>=4) return @[];
+    if(NSDate.date.timeIntervalSince1970-[status[@"timestamp"] doubleValue]>=20) return @[];
     NSMutableDictionary *groups=[NSMutableDictionary new];
     for(NSDictionary *client in status[@"clients"]) {
         if(![client[@"active"] boolValue] || ![client[@"bundleID"] isKindOfClass:NSString.class]) continue;

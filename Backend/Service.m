@@ -7,9 +7,10 @@ extern int proc_pidpath(int, void *, uint32_t);
 #include <unistd.h>
 #include <sys/resource.h>
 #include <grp.h>
+#include <pthread.h>
 static NSMutableDictionary<NSString *,NSNumber *> *tokens;
 static NSDictionary *preferences;
-static dispatch_source_t serviceTimer;
+static pthread_mutex_t stateMutex=PTHREAD_MUTEX_INITIALIZER;
 static NSMutableDictionary *metadataCache;
 static NSMutableDictionary<NSNumber *,NSNumber *> *clientTokens;
 static NSMutableDictionary<NSNumber *,NSNumber *> *detailTokens;
@@ -35,7 +36,7 @@ static void watchOwner(NSString *bid) {
         for(NSNumber *pid in webOwners) if([webOwners[pid] isEqual:bid]) publish(SDProcessGainName(pid.intValue),state|(1ULL<<13));
     } });
 }
-static void reload(void) {
+static void reloadUnlocked(void) {
     preferences=SDReadPrefs();
     publish(@SD_GLOBAL, SDGlobalState(preferences));
     NSDictionary *apps=preferences[@"apps"];
@@ -45,7 +46,8 @@ static void reload(void) {
     for(NSNumber *pid in webOwners) { NSString *bid=webOwners[pid]; publish(SDProcessGainName(pid.intValue),SDConfig(preferences,apps[bid])|(1ULL<<13)); }
     // Injection is automatic; the service never edits an enrollment filter or regains root.
 }
-static void snapshot(void) {
+static void reload(void) { pthread_mutex_lock(&stateMutex); @autoreleasepool { reloadUnlocked(); } pthread_mutex_unlock(&stateMutex); }
+static void snapshotUnlocked(void) {
     double began=NSDate.date.timeIntervalSince1970;
     phase(1,0);
     if(metadataCache.count>512) [metadataCache removeAllObjects];
@@ -56,11 +58,17 @@ static void snapshot(void) {
     int actual=proc_listallpids(pids.mutableBytes,(int)pids.length);
     NSMutableSet *livePIDs=[NSMutableSet new];
     NSMutableArray *clients=[NSMutableArray new];
-    NSMutableDictionary *paths=[NSMutableDictionary new],*identities=[NSMutableDictionary new],*coalitionOwners=[NSMutableDictionary new];
-    // Use kernel resource AND jetsam coalition IDs, never the last foreground/now-playing app.
-    // A shared or ambiguous web process remains at unity rather than controlling the wrong app.
+    NSMutableDictionary *paths=[NSMutableDictionary new],*identities=[NSMutableDictionary new],*coalitionOwners=[NSMutableDictionary new],*states=[NSMutableDictionary new];
+    // Resolve paths and ownership only for processes with fresh audio telemetry. Scanning every
+    // app path/coalition on a loaded older iPad makes discovery exceed the UI freshness window.
     for(int i=0;i<MIN(actual,(int)pids.length/(int)sizeof(pid_t));i++) {
         pid_t pid=((pid_t *)pids.mutableBytes)[i]; if(pid<=0) continue;
+        [livePIDs addObject:@(pid)];
+        int token=0; uint64_t state=0; NSNumber *cached=clientTokens[@(pid)];
+        if(cached) token=cached.intValue;
+        else if(!notify_register_check(SDClientName(pid).UTF8String,&token)) clientTokens[@(pid)]=@(token);
+        if(!clientTokens[@(pid)] || notify_get_state(token,&state) || !SDFresh(state)) continue;
+        states[@(pid)]=@(state);
         char path[4096]={0}; if(proc_pidpath(pid,path,sizeof(path))<=0) continue;
         NSString *exe=@(path);
         BOOL app=[exe hasPrefix:@"/Applications/"] || [exe hasPrefix:@"/private/var/containers/Bundle/Application/"] || [exe hasPrefix:@"/var/containers/Bundle/Application/"] || [exe hasPrefix:rootlessApplications];
@@ -71,20 +79,15 @@ static void snapshot(void) {
         if(!info) { info=[NSDictionary dictionaryWithContentsOfFile:[bundle stringByAppendingPathComponent:@"Info.plist"]]; if(info) metadataCache[bundle]=info; }
         NSString *bid=info[@"CFBundleIdentifier"]; if(SDExcludedBundle(bid)) continue;
         identities[@(pid)]=info;
-        NSString *key=SDCoalitionKey(pid); if(!key) continue;
-        NSMutableDictionary *owners=coalitionOwners[key]; if(!owners) coalitionOwners[key]=owners=[NSMutableDictionary new]; owners[bid]=info;
+        if(web) { NSString *key=SDCoalitionKey(pid); if(!key) continue;
+            NSMutableDictionary *owners=coalitionOwners[key]; if(!owners) coalitionOwners[key]=owners=[NSMutableDictionary new]; owners[bid]=info; }
     }
     for(int i=0;i<MIN(actual,(int)pids.length/(int)sizeof(pid_t));i++) {
         pid_t pid=((pid_t *)pids.mutableBytes)[i]; if(pid<=0) continue;
-        [livePIDs addObject:@(pid)];
         NSString *exe=paths[@(pid)]; if(!exe) continue;
+        uint64_t state=[states[@(pid)] unsignedLongLongValue]; if(!state) continue;
         phase(2,pid);
         phase(3,pid);
-        int token=0; uint64_t state=0; NSNumber *cached=clientTokens[@(pid)];
-        if(cached) token=cached.intValue;
-        else if(!notify_register_check(SDClientName(pid).UTF8String,&token)) clientTokens[@(pid)]=@(token);
-        if(clientTokens[@(pid)] && notify_get_state(token,&state)) { notify_cancel(token); [clientTokens removeObjectForKey:@(pid)]; state=0; }
-        if(!SDFresh(state)) continue;
         phase(4,pid);
         NSDictionary *info=identities[@(pid)]; BOOL web=(state&(1ULL<<63))!=0,verified=!web;
         if(web && [exe containsString:@"/System/"] && [exe containsString:@"com.apple.WebKit."]) {
@@ -120,6 +123,8 @@ static void snapshot(void) {
       @"disabled":@([preferences[@"disabled"] boolValue])};
     phase(5,0); [status writeToFile:SD_STATUS atomically:YES]; phase(0,0);
 }
+static void snapshot(void) { pthread_mutex_lock(&stateMutex); @autoreleasepool { snapshotUnlocked(); } pthread_mutex_unlock(&stateMutex); }
+static void *snapshotLoop(void *context) { (void)context; for(;;) { @autoreleasepool { snapshot(); } usleep(1000000); } return NULL; }
 int main(void) { @autoreleasepool {
     tokens=[NSMutableDictionary new];
     metadataCache=[NSMutableDictionary new];
@@ -130,9 +135,7 @@ int main(void) { @autoreleasepool {
     notify_register_check("com.alsinas.sounddeck.service-phase",&phaseToken);
     [[NSFileManager defaultManager] createDirectoryAtPath:SD_DIR withIntermediateDirectories:YES attributes:@{NSFilePosixPermissions:@0700} error:nil];
     @autoreleasepool { reload(); }
-    int t; notify_register_dispatch(SD_CHANGED,&t,dispatch_get_main_queue(),^(int token){ @autoreleasepool { reload(); snapshot(); } });
-    serviceTimer=dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER,0,0,dispatch_get_main_queue());
-    dispatch_source_set_timer(serviceTimer,DISPATCH_TIME_NOW,NSEC_PER_SEC,200*NSEC_PER_MSEC);
-    dispatch_source_set_event_handler(serviceTimer,^{ @autoreleasepool { snapshot(); } }); dispatch_resume(serviceTimer);
+    int t; notify_register_dispatch(SD_CHANGED,&t,dispatch_get_main_queue(),^(int token){ @autoreleasepool { reload(); } });
+    pthread_t worker; if(!pthread_create(&worker,NULL,snapshotLoop,NULL)) pthread_detach(worker);
     dispatch_main();
 } }

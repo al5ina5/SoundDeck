@@ -21,11 +21,17 @@ def capture(name):
     return data
 subprocess.run(['killall','-9','SpringBoard'],check=False)
 time.sleep(8)
-for exe in ('SoundDeck','SoundDeckMediaAQ','SoundDeckMediaAVP','SoundDeckMediaAP','SoundDeckMediaAE','SoundDeckMediaSBR','SoundDeckWeb','SoundDeckWebMedia'):
+for exe in ('MobileSafari','SoundDeck','SoundDeckMediaAQ','SoundDeckMediaAVP','SoundDeckMediaAP','SoundDeckMediaAE','SoundDeckMediaSBR','SoundDeckWeb','SoundDeckWebMedia'):
     subprocess.run(['killall','-9',exe],check=False,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
 time.sleep(1)
 launch_tone_ready(DEVICE,'com.alsinas.sounddeck.toneA'); launch_tone_ready(DEVICE,'com.alsinas.sounddeck.toneB')
-cmd(DEVICE,'launch','com.alsinas.sounddeck'); time.sleep(2)
+for _ in range(4):
+    cmd(DEVICE,'launch','com.alsinas.sounddeck'); time.sleep(3)
+    ctl('capture'); time.sleep(1)
+    try:
+        if plistlib.load(open(DIR/'ui-diagnostics.plist','rb'))['state']==0: break
+    except Exception: pass
+else: raise AssertionError('SoundDeck did not become foreground')
 ctl('mute','com.alsinas.sounddeck.toneA',0); ctl('mute','com.alsinas.sounddeck.toneB',0); time.sleep(3)
 post('sliders')
 status=json.loads(subprocess.check_output(['sdctl','status']))

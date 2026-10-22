@@ -1,6 +1,6 @@
 Package: com.alsinas.sounddeck
 Name: SoundDeck
-Version: 0.2.1
+Version: 0.2.2
 Architecture: iphoneos-arm64
 Description: Automatic native per-app audio mixer with multi-framework gain and an expandable Control Center mixer.
 Maintainer: Sebastian Alsina <alsinas@me.com>

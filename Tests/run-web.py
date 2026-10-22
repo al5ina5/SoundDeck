@@ -12,7 +12,7 @@ def cmd(*args,check=True): return subprocess.run(args,check=check,stdout=subproc
 def ctl(*args): return cmd(SDCTL,*map(str,args))
 def status(): return json.loads(ctl('status').stdout)
 def webclient(bid):
-    now=status(); assert time.time()-now['timestamp']<max(8,now.get('discoveryDurationMs',0)/1000+4),'stale service'
+    now=status(); assert time.time()-now['timestamp']<max(20,now.get('discoveryDurationMs',0)/1000+4),'stale service'
     if service_pid is not None: assert now['servicePID']==service_pid,'service restarted during web tests'
     rows=[c for c in now['clients'] if c['bundleID']==bid and c['webProcess']]
     return rows[0] if rows else None

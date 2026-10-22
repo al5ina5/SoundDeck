@@ -16,7 +16,7 @@ def launch(bid):
 def status(): return json.loads(ctl('status').stdout)
 def clients():
     data=status()
-    assert time.time()-data['timestamp']<4,'stale service'
+    assert time.time()-data['timestamp']<20,'stale service'
     if service_pid is not None: assert data['servicePID']==service_pid,'service restarted during test; possible crash/jetsam'
     return {c['bundleID']:c for c in data['clients']}
 def settle(): time.sleep(3.2)

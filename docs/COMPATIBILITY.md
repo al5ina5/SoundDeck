@@ -1,4 +1,4 @@
-# Compatibility matrix — 0.2.1 experimental
+# Compatibility matrix — 0.2.2 experimental
 
 All device measurements below were made on **iPad7,5 / A10 arm64 / iPadOS 17.7.8 (21H440) / rootless palera1n / ElleKit 1.2** with SoundDeck's separate QA fixtures. They establish that an adapter changed its real PCM buffer or native per-object volume parameter; they do not establish human-perceived loudness, arbitrary app compatibility, or route-wide output behavior.
 
@@ -21,13 +21,19 @@ All device measurements below were made on **iPad7,5 / A10 arm64 / iPadOS 17.7.8
 | Recording, calls, PlayAndRecord, MultiRoute, VoiceProcessingIO | **Intentionally excluded** to avoid altering capture/call paths. |
 | Master media volume | Native `AVSystemController` setter/getter exercised and restored; system-volume observations are quantized/cached. Route selection remains native. |
 | Headphones, Bluetooth, AirPlay, route transitions, incoming calls/Siri | Native system routing/interruption behavior is retained, but physical transition/recovery tests remain **unverified**. |
-| Dashboard and Control Center | Minimal active-app icon/slider rows, zero-slider mute, light/dark layout and scripted Control Center actions passed. Physical touch, VoiceOver and full Dynamic Type review remain **pending**. |
+| Dashboard and Control Center | Minimal active-app icon/slider rows, zero-slider mute, light/dark layout and scripted Control Center actions passed. Tap the master speaker for Bypass, Reset, Control Center recovery and Diagnostics; those actions were exercised. Physical touch, VoiceOver and full Dynamic Type review remain **pending**. |
+| Podcasts / Photos / TV / Books / Files | **Not verified**; no non-personal media/episode was selected. |
+| Service discovery | Fresh-client-only path/coalition scan reduced a sampled snapshot from ~15 s to ~49 ms; active rows tolerate 20 s scheduler delay. |
 | Portrait, Split View, Slide Over | Adaptive scene/layout code exists; portrait automation was blocked by iPadOS windowing policy. Multitasking layouts are **not interactively tested**. |
 | Ducking | **Not implemented**. |
 
 ## Discovery and controllability
 
 The tweak is injected broadly into UIKit app processes for automatic discovery, then applies runtime guards. It also injects a dedicated agent into WebKit WebContent/GPU processes. The service publishes a per-app row only from fresh audio telemetry and groups a WebKit process to its host only when coalition ownership is unambiguous. An ambiguous or excluded path is bypassed/marked uncontrollable, not represented by a fake active slider. Saved gains are keyed by bundle ID and survive process/app restarts.
+
+## Optional PC-style concurrency
+
+See [the feasibility report](research/pc-style-concurrency-feasibility.md). Public `MixWithOthers` behavior is app- and activation-timing-specific; a universal interruption suppressor would need private/daemon-level changes and is not recommended. SoundDeck 0.2.2 ships **no** forced-concurrency feature.
 
 ## Why compatibility is limited
 

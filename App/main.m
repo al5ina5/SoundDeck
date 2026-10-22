@@ -5,6 +5,7 @@
 #import "../Shared/SDProtocol.h"
 #import "SDMasterVolume.h"
 #import "../Shared/SDMixerRow.h"
+#import "../Tools/SDControlCenterConfig.h"
 @interface UIImage (SDPrivate)
 + (UIImage *)_applicationIconImageForBundleIdentifier:(NSString *)bid format:(int)format scale:(CGFloat)scale;
 @end
@@ -47,7 +48,12 @@
     UIView *header=[[UIView alloc] initWithFrame:CGRectMake(0,0,600,64)];
     _masterIcon=[[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"speaker.wave.2.fill"]];
     _masterIcon.contentMode=UIViewContentModeScaleAspectFit; _masterIcon.tintColor=UIColor.labelColor;
-    _masterIcon.isAccessibilityElement=YES; _masterIcon.accessibilityLabel=@"System media volume";
+    _masterIcon.isAccessibilityElement=YES; _masterIcon.accessibilityLabel=@"System media volume"; _masterIcon.accessibilityHint=@"Long press for SoundDeck settings";
+    _masterIcon.userInteractionEnabled=YES;
+    UILongPressGestureRecognizer *settingsPress=[[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(settingsGesture:)];
+    settingsPress.minimumPressDuration=.6; [_masterIcon addGestureRecognizer:settingsPress];
+    [_masterIcon addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(settingsTap:)]];
+    _masterIcon.accessibilityCustomActions=@[[[UIAccessibilityCustomAction alloc] initWithName:@"SoundDeck settings" target:self selector:@selector(settingsAction:)]];
     _masterSlider=[UISlider new]; _masterSlider.minimumValue=0; _masterSlider.maximumValue=1;
     _masterSlider.tintColor=UIColor.systemIndigoColor; _masterSlider.accessibilityLabel=@"System media volume";
     [_masterSlider addTarget:self action:@selector(masterChanged:) forControlEvents:UIControlEventValueChanged];
@@ -133,6 +139,47 @@
     }
 }
 - (void)masterChanged:(UISlider *)slider { if(![SDMasterVolume setLevel:slider.value]) { float level=[SDMasterVolume level]; if(level>=0) slider.value=level; } }
+- (void)settingsGesture:(UILongPressGestureRecognizer *)gesture { if(gesture.state==UIGestureRecognizerStateBegan) [self showSettings]; }
+- (void)settingsTap:(UITapGestureRecognizer *)gesture { [self showSettings]; }
+- (BOOL)settingsAction:(UIAccessibilityCustomAction *)action { [self showSettings]; return YES; }
+- (void)showSettings {
+    if(self.presentedViewController) return;
+    BOOL disabled=[_prefs[@"disabled"] boolValue];
+    BOOL ccInstalled=[NSFileManager.defaultManager fileExistsAtPath:SD_DIR @"/cc-installed.plist"];
+    UIAlertController *sheet=[UIAlertController alertControllerWithTitle:@"SoundDeck" message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    [sheet addAction:[UIAlertAction actionWithTitle:(disabled?@"Enable SoundDeck":@"Bypass SoundDeck") style:UIAlertActionStyleDefault handler:^(UIAlertAction *a){ [self toggleBypass]; }]];
+    [sheet addAction:[UIAlertAction actionWithTitle:@"Reset volumes" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *a){ [self resetVolumes]; }]];
+    [sheet addAction:[UIAlertAction actionWithTitle:(ccInstalled?@"Remove from Control Center":@"Add to Control Center") style:UIAlertActionStyleDefault handler:^(UIAlertAction *a){ [self toggleControlCenter]; }]];
+    [sheet addAction:[UIAlertAction actionWithTitle:@"Diagnostics" style:UIAlertActionStyleDefault handler:^(UIAlertAction *a){ [self diagnosticsAlert]; }]];
+    [sheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
+    sheet.popoverPresentationController.sourceView=_masterIcon; sheet.popoverPresentationController.sourceRect=_masterIcon.bounds;
+    [self presentViewController:sheet animated:YES completion:nil];
+}
+- (void)toggleBypass {
+    _prefs[@"disabled"]=@(![_prefs[@"disabled"] boolValue]); [self save]; [self refresh];
+    UINotificationFeedbackGenerator *h=[UINotificationFeedbackGenerator new]; [h notificationOccurred:UINotificationFeedbackTypeSuccess];
+}
+- (void)resetVolumes {
+    NSMutableDictionary *apps=[_prefs[@"apps"] mutableCopy] ?: [NSMutableDictionary new];
+    for(NSString *bid in apps.allKeys) { NSMutableDictionary *entry=[apps[bid] mutableCopy]; entry[@"gain"]=@1; entry[@"muted"]=@NO; apps[bid]=entry; }
+    _prefs[@"apps"]=apps; [self save]; [self refresh];
+}
+- (void)toggleControlCenter {
+    BOOL install=![NSFileManager.defaultManager fileExistsAtPath:SD_DIR @"/cc-installed.plist"];
+    NSError *error=nil; BOOL ok=SDConfigureControlCenter(install,&error);
+    UIAlertController *alert=[UIAlertController alertControllerWithTitle:(ok?(install?@"Added to Control Center":@"Removed from Control Center"):@"Could not change Control Center") message:(ok?@"Restart SpringBoard if the module does not appear.":error.localizedDescription) preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+- (void)diagnosticsAlert {
+    NSUInteger clients=[_status[@"clients"] count];
+    NSString *text=[NSString stringWithFormat:@"Backend %@ · %lu active app%@ · %lu process%@",_status[@"version"] ?: @"unavailable",(unsigned long)_active.count,_active.count==1?@"":@"s",(unsigned long)clients,clients==1?@"":@"es"];
+    if([_prefs[@"disabled"] boolValue]) text=[text stringByAppendingString:@" · Bypassed"];
+    UIAlertController *alert=[UIAlertController alertControllerWithTitle:@"Diagnostics" message:text preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"Copy" style:UIAlertActionStyleDefault handler:^(UIAlertAction *a){ UIPasteboard.generalPasteboard.string=text; }]];
+    [alert addAction:[UIAlertAction actionWithTitle:@"Done" style:UIAlertActionStyleCancel handler:nil]];
+    [self presentViewController:alert animated:YES completion:nil];
+}
 - (void)save {
     NSMutableDictionary *changes=[NSMutableDictionary new];
     for(NSString *key in _prefs) {
