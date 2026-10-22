@@ -2,55 +2,47 @@
 
 ## Toolchain used
 
-- Procursus Clang 16.0.0 (5.9.2 toolchain distribution), native arm64.
-- Existing `/var/jb/usr/share/SDKs/iPhoneOS.sdk`; a second iPhoneOS 16.5 SDK and Theos installation were also found in the workspace.
-- ldid 2.1.5, ld64 951.9, odcctools (`install_name_tool`, `otool`), dpkg 1.22.6, Python 3.9, make 4.4.1.
-- Rootless palera1n bootstrap, `/var/jb` prefix, ElleKit 1.2, uikittools.
+- Procursus Clang 16 / native arm64, local iPhoneOS SDK (`/var/jb/usr/share/SDKs/iPhoneOS.sdk`), local Foundation/UIKit/framework stubs.
+- ldid, odcctools (`install_name_tool`, `otool`), dpkg/dpkg-deb, Python 3, rootless palera1n, ElleKit 1.2, uikittools and CCSupport.
 
-No missing dependencies had to be installed. No remote compiler, Apple account, signing certificate, SDK download or external runner was needed. The SDK and jailbreak libraries are supplied by the local environment and are not committed.
+No remote compiler, Apple signing account/certificate, SDK download or external runner was needed. SDK and jailbreak libraries are environment prerequisites, not committed.
 
 ## Normal package
 
 ```sh
 export SDK=/var/jb/usr/share/SDKs/iPhoneOS.sdk
 bash build.sh
-dpkg-deb -I packages/com.alsinas.sounddeck_0.1.0_iphoneos-arm64.deb
-dpkg-deb -c packages/com.alsinas.sounddeck_0.1.0_iphoneos-arm64.deb
-sudo dpkg -i packages/com.alsinas.sounddeck_0.1.0_iphoneos-arm64.deb
+python3 Tools/validate-package.py packages/com.alsinas.sounddeck_0.2.0_iphoneos-arm64.deb
+sudo dpkg -i packages/com.alsinas.sounddeck_0.2.0_iphoneos-arm64.deb
 ```
 
-Every executable and the tweak receive a local ldid signature. All package payload paths are under `/var/jb`; architecture is `iphoneos-arm64`. The app is a jailbreak platform application, not an unsigned IPA intended for stock-device sideloading.
+Executables receive local ldid signatures and payload paths are rooted under `/var/jb`; architecture is `iphoneos-arm64`. The normal package does not include scripted UI controls or fixture apps. Build normal after QA before release.
 
-The local substrate alias advertises `/usr/local/lib/libellekit.dylib`; the build normalizes that dependency to `@rpath/libellekit.dylib` with `/var/jb/usr/lib` in the runtime search path before signing. Validate the normal package with `python3 Tools/validate-package.py packages/com.alsinas.sounddeck_0.1.0_iphoneos-arm64.deb`.
+The local ElleKit substrate alias advertises a rootful path; the build normalizes it to `@rpath/libellekit.dylib` and embeds `/var/jb/usr/lib` as the runtime path before signing. The build recreates generated staging trees and native icon assets; procedure is repeatable, byte-identical output is not claimed.
 
-The build stages only generated files under `build/stage` and `build/test-stage`, then emits gzip Debian archives into `packages/`. It regenerates the original icon through native Core Graphics. Rebuilding from source is reproducible as a procedure; byte-for-byte artifact identity is not claimed because toolchain UUID/signature/archive metadata may vary.
-
-## QA packages and automated tests
+## QA packages and suites
 
 ```sh
 bash build.sh --tests
 python3 Tests/run-unit.py
-sudo dpkg -i packages/com.alsinas.sounddeck_0.1.0_qa_iphoneos-arm64.deb \
-  packages/com.alsinas.sounddeck.tests_0.1.0_iphoneos-arm64.deb
+sudo dpkg -i packages/com.alsinas.sounddeck_0.2.0_qa_iphoneos-arm64.deb \
+  packages/com.alsinas.sounddeck.tests_0.2.0_iphoneos-arm64.deb
 python3 Tests/run-device.py
+python3 Tests/run-media.py
+python3 Tests/run-web.py
 python3 Tests/run-ui.py
 ```
 
-`--tests` enables compile-time-only scripted UI controls in the QA application and creates the separate optional signal package. It also builds a signed FrontBoard launcher because the installed `uiopen` did not reliably launch the app from this execution context. Its completion errors are checked. The normal package excludes these scripted controls.
+Run device suites serially; they launch/kill fixtures and modify only SoundDeck fixture gains/mutes, mixing/bypass settings and master media volume (which is restored). `--tests` enables compile-time-only scripted hooks and adds the separate optional fixture package. Fixtures play low-level generated test signals only when explicitly launched. UI scripts send real UIKit/Control Center control actions, not physical touches. The portrait request may be rejected by the current windowing mode and is recorded rather than bypassed by changing system settings.
 
-Unit tests use an isolated preference directory, never the user's real preferences. Device tests deliberately change only the fixture bundle gains/mutes and SoundDeck's mixing/bypass settings. UI tests send real UIKit control actions, not physical touch events; the master test lowers the existing media volume then restores it. They do not modify system rotation lock or accessibility settings.
+## Lifecycle suite
 
-## Release-candidate recovery test
-
-After QA, rebuild the normal package and install it. Keep the optional test package installed, then:
+After building the normal package and keeping the optional fixture package installed:
 
 ```sh
-bash build.sh
-sudo dpkg -i packages/com.alsinas.sounddeck_0.1.0_iphoneos-arm64.deb
-python3 Tests/run-device.py
 python3 Tests/run-lifecycle.py
 ```
 
-The lifecycle harness stops only SoundDeck's service, tests the watchdog, upgrades, temporarily removes only SoundDeck while its own optional fixture package remains, and reinstalls in `finally`. It uses `dpkg --force-depends` solely for that temporary dependency on **SoundDeck's own test package**. Do not interrupt this test during the remove/reinstall interval. It does not uninstall or alter unrelated packages.
+Read the script first. It stops the SoundDeck service, exercises watchdog recovery, upgrades, temporarily removes only SoundDeck using `dpkg --force-depends` because its own QA fixture package depends on it, then reinstalls SoundDeck in `finally`. Do not interrupt the temporary removal interval. It does not uninstall or modify unrelated packages.
 
-Generated local results are ignored by Git. Public reports must be copied selectively after checking for private information. Do not commit tokens, SDKs, device crash logs, browser content or package-manager credential files.
+Generated local reports under `Tests/results-local/` are Git-ignored. Copy only sanitized measurements into `docs/reports/`; exclude credentials, full device logs, private app data and unrelated diagnostics.

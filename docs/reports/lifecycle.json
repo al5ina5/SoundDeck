@@ -3,7 +3,7 @@
     {
       "test": "service-loss watchdog restores PCM unity",
       "pass": true,
-      "rms": 0.05679407949950408
+      "rms": 0.05641260395208667
     },
     {
       "test": "package upgrade preserves enabled state and gains",
@@ -12,7 +12,7 @@
     {
       "test": "uninstall restores native nonmixing playback and unity PCM",
       "pass": true,
-      "rms": 0.056321049820706494
+      "rms": 0.05662623025864042
     }
   ]
 }

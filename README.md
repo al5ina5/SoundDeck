@@ -1,8 +1,8 @@
 # SoundDeck
 
-**Experimental native iPad audio mixer for rootless jailbreaks.** Real per-process gain, not sliders wired to the system's single volume setting.
+**Experimental per-app audio mixer for rootless-jailbroken iPads.** SoundDeck discovers participating apps automatically and applies each app's saved 0–100% gain or mute to supported audio pipelines. It includes a native UIKit dashboard and an expandable Control Center mixer.
 
-> This is a limited-compatibility prerelease, not a universal Windows mixer. Independent PCM gain is verified with two on-device RemoteIO test applications. Safari/WebKit, DRM playback and arbitrary App Store applications are **not** verified or universally supported. See [compatibility](docs/COMPATIBILITY.md) and [device test evidence](docs/TESTING.md).
+> **Experimental compatibility.** A broad injection filter makes automatic discovery possible, but not every app exposes a controllable output. Numeric tests verify several real adapters on one iPad; they do not certify every App Store app or replace human listening and route testing. See [the compatibility matrix](docs/COMPATIBILITY.md) and [device evidence](docs/TESTING.md).
 
 <img src="docs/images/landscape-light.png" width="720" alt="SoundDeck native iPad dashboard in light appearance">
 
@@ -10,72 +10,70 @@
 <img src="docs/images/landscape-dark.png" width="720" alt="SoundDeck native iPad dashboard in dark appearance">
 </details>
 
-Screenshots are cropped captures of the actual on-device UIKit view hierarchy, not mockups. Layer capture omits system chrome and live blur effects; saved application rows are excluded from public images.
+## Verified on-device
 
-## What works
+- Per-app live discovery without enrollment; gains persist by bundle ID.
+- Independent RemoteIO/AudioUnit PCM attenuation and mute, measured with two simultaneous signal fixtures and independent post-render observers.
+- AudioQueue, AVPlayer, AVAudioPlayer and AVSampleBufferAudioRenderer adapter controls, including host-volume changes and mute, verified through real native volume parameters.
+- AVAudioEngine PCM gain, checked against an independent post-render observer.
+- WebKit GPU-process attribution and control for the fixture's Web Audio PCM and HTML media/AVPlayer paths.
+- Five non-WebKit fixture adapters running concurrently; service-loss watchdog, bypass, upgrade and uninstall recovery.
+- Control Center app sliders, media master-volume setter, persistence, capture and dashboard light/dark accessibility/layout checks.
 
-- Separate 0–100% app gain and mute for supported direct RemoteIO playback callbacks.
-- Concurrent playback through opt-in `MixWithOthers` handling for playback sessions.
-- Persistent, bundle-ID-keyed preferences and remembered applications.
-- Real application icons, playback activity, current output name, light/dark appearance, native accessibility labels, Dynamic Type fonts and iPad scene-based layouts.
-- System media master volume, independently of app gain; route selection remains the native system control.
-- A five-second backend-loss watchdog, bypass, reset, diagnostics and scoped emergency recovery.
-- An experimental per-object AVPlayer adapter. **Its real-media behavior is not validated and is not part of the verified compatibility claim.**
-
-Verified environment: **iPad 6th generation / iPad7,5 / A10 arm64 / iPadOS 17.7.8 (21H440) / palera1n rootless / Procursus / ElleKit 1.2**. This build is arm64-only. Other devices and OS versions require validation; arm64e system processes need a suitable rebuild.
+Test device: **iPad 6th generation / iPad7,5 / A10 arm64 / iPadOS 17.7.8 (21H440) / palera1n rootless / Procursus / ElleKit 1.2**. The package is arm64-only. Other hardware, OS versions, apps and routes need their own validation. Numeric adapter checks are not acoustic-output measurement or human listening confirmation.
 
 ## Install
 
-Install the `.deb` from the GitHub prerelease using Sileo/Zebra, or:
+Install the normal package `com.alsinas.sounddeck_0.2.0_iphoneos-arm64.deb` from the [experimental release](https://github.com/al5ina5/SoundDeck/releases/tag/v0.2.0-experimental.1) using Sileo/Zebra, or:
 
 ```sh
-sudo dpkg -i com.alsinas.sounddeck_0.1.0_iphoneos-arm64.deb
+sudo dpkg -i com.alsinas.sounddeck_0.2.0_iphoneos-arm64.deb
 ```
 
-Open SoundDeck, tap **+**, enroll an application, then restart **that application** to load the tweak. Enrollment is not a compatibility guarantee. No SpringBoard/audio-daemon injection or respring is required. Recording, calls and VoiceProcessingIO are intentionally excluded.
+Requires a rootless ElleKit jailbreak, CCSupport, iPadOS 15 or later, and an arm64 device. The package adds SoundDeck to the CCSupport module layout when possible. If it does not appear, restart SpringBoard or add SoundDeck in Control Center settings. `sdctl cc-install` and `sdctl cc-remove` manage only SoundDeck's module entry.
 
-Optional verification signals are in `com.alsinas.sounddeck.tests_0.1.0_iphoneos-arm64.deb`. These are quiet, continuous 440/880 Hz generators, not fake application entries. They run only when explicitly launched. Stop them when finished testing.
+Open SoundDeck or Control Center. Playing apps appear automatically when SoundDeck observes an active supported output; **there is no enrollment step**. Set each app's gain/mute independently. The master slider controls system media volume, not per-app gain. Recording, calls and VoiceProcessingIO paths are excluded. Restart an already-running app after installing/upgrading so it loads the new tweak.
 
-## Build locally
+The optional `com.alsinas.sounddeck.tests_0.2.0_iphoneos-arm64.deb` contains quiet 440/880 Hz and framework fixtures. Install only for QA; launch them explicitly and stop them after testing. They are not production app rows.
 
-Dependencies: a jailbroken arm64 device, Clang/Clang++, iOS SDK, Foundation/UIKit framework stubs, make, Python 3, ldid, dpkg-deb, ElleKit's substrate compatibility library, and uikittools. Everything was compiled, signed, packaged and installed **on this iPad**, without an external runner.
+## Build and test locally
+
+Requires a jailbroken arm64 build device with local Clang/Clang++, an iOS SDK, ldid, dpkg-deb, ElleKit and CCSupport. This project was built and signed on the test iPad; the SDK and jailbreak libraries are not included.
 
 ```sh
 git clone https://github.com/al5ina5/SoundDeck.git
 cd SoundDeck
 export SDK=/var/jb/usr/share/SDKs/iPhoneOS.sdk
 bash build.sh
-sudo dpkg -i packages/com.alsinas.sounddeck_0.1.0_iphoneos-arm64.deb
+python3 Tools/validate-package.py packages/com.alsinas.sounddeck_0.2.0_iphoneos-arm64.deb
 ```
 
-The SDK is not included. The build defaults to deployment target iOS 15, arm64, and `/var/jb` package paths. Exact build prerequisites and the QA workflow are in [BUILDING.md](docs/BUILDING.md). Building with `--tests` additionally creates a QA app package and the separate signal-fixture package. **The normal package has no scripted UI-test hooks.**
+For QA-only fixtures and scripted hooks:
+
+```sh
+bash build.sh --tests
+python3 Tests/run-unit.py
+sudo dpkg -i packages/com.alsinas.sounddeck_0.2.0_qa_iphoneos-arm64.deb \
+  packages/com.alsinas.sounddeck.tests_0.2.0_iphoneos-arm64.deb
+python3 Tests/run-device.py
+python3 Tests/run-media.py
+python3 Tests/run-web.py
+python3 Tests/run-ui.py
+```
+
+`Tests/run-lifecycle.py` intentionally stops/removes/reinstalls only SoundDeck to validate recovery; read its source before running. Build prerequisites and safety notes are in [BUILDING.md](docs/BUILDING.md). The normal package excludes scripted QA controls.
 
 ## Recovery and removal
 
 ```sh
-sdctl disable                    # unity gain; restore requested session options
+sdctl disable                    # unity gain and restore requested playback options
 sudo apt remove com.alsinas.sounddeck.tests com.alsinas.sounddeck
 ```
 
-If an enrolled app crashes before it can receive bypass, rename `/var/jb/Library/MobileSubstrate/DynamicLibraries/SoundDeck.plist` to `SoundDeck.plist.disabled`, stop `com.alsinas.sounddeck`, then restart only the affected app. The service regenerates the filter while running, so stop it as well. [Full recovery instructions](docs/TROUBLESHOOTING.md).
+Uninstall removes SoundDeck's Control Center entry, preserves preferences intentionally, and restores stock behavior for new processes. Existing processes keep mapped tweak code until restarted; bypass/watchdog returns supported PCM paths to unity. If the jailbreak is inactive, injection is absent and audio is stock; the `/var/jb` application may not launch until the jailbreak returns. Emergency recovery is documented in [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
-Uninstall retains SoundDeck preferences intentionally and restores native behavior for new app processes. Already-running apps retain mapped tweak code until restarted, but bypass/watchdog restores unity gain. When the jailbreak is inactive, injection is absent and audio is stock; the rootless application itself may not be launchable until the jailbreak returns.
+## Architecture and limitations
 
-## Architecture
+The tweak observes active app audio paths, applies PCM attenuation or framework-native per-object volume, and reports fresh activity to the local service. WebKit subprocesses are separately injected and attributed to their host app through coalition identity when unambiguous. Unknown/ambiguous owners are not offered as controllable app rows. No recording, network service, analytics, cloud dependency, song metadata or media content inspection is used.
 
-| Module | Purpose |
-|---|---|
-| `App/` | UIKit dashboard and native master-media-volume adapter |
-| `Backend/Tweak.mm` | Allowlisted process-local RemoteIO / AVPlayer / playback-session hooks |
-| `Backend/Service.m` | Preferences publication, discovery and diagnostics |
-| `Shared/` | notifyd protocol, validation, locked transactional persistence |
-| `Tests/` | Unit, device PCM, UI-action and package-recovery tests |
-| `Packaging/` | Rootless Debian metadata and reversible lifecycle scripts |
-
-There is no audio recording, network service, analytics, cloud dependency or content inspection. IPC and diagnostics contain gains, bundle identifiers, playback activity and numeric RMS. Root privilege is used only to maintain a fixed, validated injection-filter file; user-file processing runs with mobile's effective identity. See [architecture and security](docs/ARCHITECTURE.md).
-
-## Current limitations
-
-No AudioQueue adapter, general AVAudioEngine graph support, WebKit subprocess attribution, automatic ducking, multi-hour endurance certification, verified Bluetooth/AirPlay/headphone transitions, or human listening confirmation. Portrait is declared and uses adaptive UIKit constraints, but programmatic portrait verification was blocked by this iPad's current windowing mode. Do not treat untested paths as supported.
-
-MIT licensed. [Third-party notices and research attribution](THIRD_PARTY_NOTICES.md).
+SoundDeck does not provide a universal iOS per-process hardware volume API. Apps may use unwrapped graphs, remote rendering, protected output or private pipelines that are not covered by tested adapters. Human listening, headphones/Bluetooth/AirPlay transitions, physical touch/VoiceOver review, portrait layout and multi-hour endurance remain unverified. The release stays explicitly **experimental**. See [architecture](docs/ARCHITECTURE.md), [compatibility](docs/COMPATIBILITY.md), [testing](docs/TESTING.md), [MIT license](LICENSE) and [third-party notices](THIRD_PARTY_NOTICES.md).

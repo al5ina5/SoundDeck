@@ -1,24 +1,27 @@
 #import "../Shared/SDProtocol.h"
+#import "SDControlCenterConfig.h"
 #include <stdio.h>
 #include <unistd.h>
-static int usage(void) { fprintf(stderr,"sdctl status | gain BUNDLE 0..100 | mute BUNDLE 0|1 | enroll BUNDLE | mixing 0|1 | appearance 0|1|2 | capture | disable | enable | reset\n"); return 2; }
+static int usage(void) { fprintf(stderr,"sdctl status | gain BUNDLE 0..100 | mute BUNDLE 0|1 | mixing 0|1 | appearance 0|1|2 | capture | cc-show | cc-expand | cc-capture | cc-dismiss | cc-status | disable | enable | reset\n"); return 2; }
 int main(int argc,char **argv) { @autoreleasepool {
     if(argc<2) return usage(); NSString *command=@(argv[1]);
+    if([command isEqual:@"enroll"]) { puts("Enrollment is no longer necessary. Audio apps are discovered automatically."); return 0; }
+    if([@[@"cc-show",@"cc-expand",@"cc-capture",@"cc-dismiss"] containsObject:command]) { notify_post([[@"com.alsinas.sounddeck.cc." stringByAppendingString:[command substringFromIndex:3]] UTF8String]); return 0; }
+    if([command isEqual:@"cc-install"] || [command isEqual:@"cc-remove"]) { NSError *error=nil; BOOL ok=SDConfigureControlCenter([command isEqual:@"cc-install"],&error); if(!ok) fprintf(stderr,"Control Center configuration not changed: %s\n",error?error.description.UTF8String:"no existing CCSupport layout found; add SoundDeck in Settings > Control Center"); return ok?0:1; }
     if([command isEqual:@"is-disabled"]) return [SDReadPrefs()[@"disabled"] boolValue]?0:1;
     if([command isEqual:@"capture"]) { notify_post("com.alsinas.sounddeck.capture"); return 0; }
-    if([command isEqual:@"status"]) {
-        NSDictionary *status=[NSDictionary dictionaryWithContentsOfFile:SD_STATUS] ?: @{};
+    if([command isEqual:@"status"] || [command isEqual:@"cc-status"]) {
+        NSDictionary *status=[NSDictionary dictionaryWithContentsOfFile:[command isEqual:@"cc-status"]?SD_DIR @"/cc-diagnostics.plist":SD_STATUS] ?: @{};
         NSData *json=[NSJSONSerialization dataWithJSONObject:status options:NSJSONWritingPrettyPrinted error:nil];
         if(json) fwrite(json.bytes,1,json.length,stdout); puts(""); return status.count?0:1;
     }
     NSDictionary *original=SDReadPrefs();
     NSMutableDictionary *p=[original mutableCopy];
     NSMutableDictionary *apps=[p[@"apps"] mutableCopy] ?: [NSMutableDictionary new];
-    if([@[@"gain",@"mute",@"enroll"] containsObject:command]) {
+    if([@[@"gain",@"mute"] containsObject:command]) {
         if(argc<3) return usage(); NSString *bid=@(argv[2]);
         NSMutableDictionary *a=[apps[bid] mutableCopy] ?: [NSMutableDictionary new];
-        if([command isEqual:@"enroll"]) a[@"enrolled"]=@YES;
-        else { if(argc!=4) return usage(); char *end=NULL; double value=strtod(argv[3],&end);
+        { if(argc!=4) return usage(); char *end=NULL; double value=strtod(argv[3],&end);
             if(*end || !isfinite(value) || value<0 || value>([command isEqual:@"gain"]?100:1)) return usage();
             a[[command isEqual:@"gain"]?@"gain":@"muted"]=[command isEqual:@"gain"]?@(value/100.):@(value!=0);
         }

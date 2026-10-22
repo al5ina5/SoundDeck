@@ -2,16 +2,21 @@
 
 ## A slider has no effect
 
-1. Confirm the jailbreak and ElleKit are active.
-2. Enroll the actual application with **+**, then restart that app. Existing processes cannot acquire a newly installed injection filter automatically.
-3. Run `sdctl status`. A Saved row is not a fabricated active audio session.
-4. Check [compatibility](COMPATIBILITY.md). Safari's media subprocess, AudioQueue and unwrapped AVAudioEngine graphs are not supported. Do not keep trying to fix a remotely rendered audio path with a master-volume setter.
+1. Confirm the rootless jailbreak, ElleKit and CCSupport are active.
+2. Start playback. SoundDeck discovers supported active outputs automatically; there is no enrollment action. A saved gain is not proof the current output is controllable.
+3. Read `sdctl status`: inspect the app's active/path/controllable fields and whether telemetry is fresh.
+4. Check the [compatibility matrix](COMPATIBILITY.md). A remotely rendered, protected, unwrapped or app-specific path may bypass every tested adapter. Do not try to solve per-app control with the system master slider.
+5. Restart that app after installing/upgrading SoundDeck.
 
-The AVPlayer path is experimental and unverified. App Store apps may use entirely different engines or stop playback themselves. A successful launch or an advancing player clock alone is not proof of audible gain control.
+The fixtures verify concrete paths, not every commercial app. A successful app launch/player clock is not proof of audible gain; published results distinguish PCM measurement from native parameter verification and human listening.
+
+## Control Center module missing
+
+SoundDeck attempts to add only its own CCSupport module identifier while retaining existing layout/reordering. Confirm CCSupport is installed, then restart SpringBoard or use Settings > Control Center. `sdctl cc-install` retries the registration; `sdctl cc-remove` removes only SoundDeck's entry. The original layout backup is stored at `/var/mobile/Library/SoundDeck/cc-layout-backup.plist`.
 
 ## No simultaneous audio
 
-Turn on **Allow simultaneous playback**, then restart playback in each enrolled supported app. Only playback/solo-ambient sessions are modified. Recording and calls are excluded. Some apps intentionally pause themselves in the background; this adapter cannot override arbitrary app logic.
+The setting affects eligible playback/solo-ambient sessions only. Recording, calls and voice-processing categories are intentionally excluded. Some apps pause themselves when backgrounded or explicitly refuse concurrent playback; SoundDeck cannot override app logic.
 
 ## Service unavailable
 
@@ -22,9 +27,7 @@ sudo launchctl bootout system/com.alsinas.sounddeck
 sudo launchctl bootstrap system /var/jb/Library/LaunchDaemons/com.alsinas.sounddeck.plist
 ```
 
-On this bootstrap launchctl may print a `user/501` proxy-domain warning even for the system service command. The inspected job must be `com.alsinas.sounddeck` with program `/var/jb/usr/libexec/sounddeckd`.
-
-Clients should bypass automatically after about five seconds without the service's global heartbeat. Restart only affected playback apps if necessary. Do not restart audio daemons or respring blindly.
+A client fails open to unity after about five seconds without fresh global service state. Restart affected playback apps if needed. Do not restart audio daemons or respring blindly.
 
 ## Emergency disable
 
@@ -32,7 +35,7 @@ Clients should bypass automatically after about five seconds without the service
 sdctl disable
 ```
 
-If an app crashes too early to receive bypass, prevent further injection and stop the service that maintains the filter:
+If an app crashes before it can receive bypass, prevent further injection and stop the service that maintains the filter:
 
 ```sh
 sudo launchctl bootout system/com.alsinas.sounddeck
@@ -40,19 +43,15 @@ sudo mv /var/jb/Library/MobileSubstrate/DynamicLibraries/SoundDeck.plist \
   /var/jb/Library/MobileSubstrate/DynamicLibraries/SoundDeck.plist.disabled
 ```
 
-Restart only the affected application. No SpringBoard or audio daemon is injected by SoundDeck. To re-enable after resolving the problem, restore the `.plist`, bootstrap the service, run `sdctl enable`, then restart the enrolled app.
+Restart only the affected app. To re-enable, restore that `.plist`, bootstrap the service, run `sdctl enable`, then restart the app.
 
-## Uninstall
+## Uninstall and diagnostics
 
 ```sh
 sdctl disable
 sudo apt remove com.alsinas.sounddeck.tests com.alsinas.sounddeck
 ```
 
-The pre-removal script sends bypass before unloading the service. Already-loaded code cannot be unmapped safely from a running foreign process; restarting the app finishes restoration. Preferences remain at `/var/mobile/Library/SoundDeck/preferences.plist`. Delete that **specific SoundDeck preference file** manually only if you deliberately want to forget saved gains/enrollment. No personal media or app data is modified by uninstall.
+Removal sends bypass, removes SoundDeck's own CCSupport entry and preserves SoundDeck preferences. Already-loaded code cannot be unmapped safely; restarting affected apps finishes restoration. No personal media/app data is removed.
 
-## Diagnostics
-
-`sdctl status` prints fresh service/client status, actual numeric PCM RMS where available, and service resource counters. `sdctl capture` asks SoundDeck to capture its own foreground view hierarchy into `/var/mobile/Library/SoundDeck/capture.png`. This is opt-in and captures no other application's content.
-
-Do not attach full device crash archives to public issues. Share only sanitized SoundDeck-specific evidence. There is no microphone recording or human listening confirmation in automated results.
+`sdctl status` shows current per-app telemetry and service counters. `sdctl capture` captures only SoundDeck's own foreground view into `/var/mobile/Library/SoundDeck/capture.png`. Do not attach full device crash archives to public issues; share sanitized SoundDeck-specific measurements only.

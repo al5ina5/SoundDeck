@@ -1,0 +1,28 @@
+{
+  "device": "iPad7,5",
+  "os": "17.7.8 (21H440)",
+  "humanListeningConfirmed": false,
+  "results": [
+    {
+      "test": "webaudio Web Audio PCM 35%",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.web",
+      "path": "AudioUnit PCM",
+      "inputRMS": 0.057862211032272834,
+      "outputRMS": 0.020248722056916153,
+      "ratio": 0.349947
+    },
+    {
+      "test": "media media element AVPlayer 35%",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.webmedia",
+      "path": "AVPlayer",
+      "nativeBase": 1,
+      "nativeVolume": 0.35
+    },
+    {
+      "test": "WebKit owner stays attributed to the host app",
+      "pass": true
+    }
+  ]
+}

@@ -25,7 +25,7 @@ def verify(label,ga,gb,active=True):
     for bid,expected in [(A,ga),(B,gb)]:
         c=data[bid]
         assert not active or c['active'],f'{bid} not rendering'
-        assert c['metered'] and c['path']=='RemoteIO PCM',f'{bid} not PCM instrumented'
+        assert c['metered'] and c['path'] in ('RemoteIO PCM','AudioUnit PCM'),f'{bid} not PCM instrumented'
         assert c['inputRMS']>.02,f'{bid} has no signal'
         ratio=c['outputRMS']/c['inputRMS']
         assert abs(ratio-expected)<.004,f'{bid}: measured {ratio}, expected {expected}'

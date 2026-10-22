@@ -3,7 +3,10 @@ set -e
 mkdir -p /var/mobile/Library/SoundDeck
 chown mobile:mobile /var/mobile/Library/SoundDeck
 chmod 700 /var/mobile/Library/SoundDeck
-launchctl bootout system/com.alsinas.sounddeck 2>/dev/null || true
+su mobile -c '/var/jb/usr/bin/sdctl cc-install' || true
+for domain in system user/501; do
+  launchctl bootout "$domain/com.alsinas.sounddeck" 2>/dev/null || true
+done
 su mobile -c 'rm -f /var/mobile/Library/SoundDeck/status.plist'
 launchctl bootstrap system /var/jb/Library/LaunchDaemons/com.alsinas.sounddeck.plist
 if [ -f /var/jb/var/lib/sounddeck/re-enable ]; then

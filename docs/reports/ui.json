@@ -7,6 +7,16 @@
     "rows": [
       {
         "ambiguous": false,
+        "bundleID": "com.alsinas.sounddeck.toneA",
+        "gain": 0.20000000298023224,
+        "iconPresent": 1,
+        "muteAccessible": 1,
+        "muted": false,
+        "sliderAccessible": 1,
+        "touchTargetHeight": 44.0
+      },
+      {
+        "ambiguous": false,
         "bundleID": "com.alsinas.sounddeck.toneB",
         "gain": 0.800000011920929,
         "iconPresent": 1,
@@ -17,8 +27,8 @@
       },
       {
         "ambiguous": false,
-        "bundleID": "com.alsinas.sounddeck.toneA",
-        "gain": 0.20000000298023224,
+        "bundleID": "com.alsinas.sounddeck.media.ap",
+        "gain": 1.0,
         "iconPresent": 1,
         "muteAccessible": 1,
         "muted": false,
@@ -36,6 +46,16 @@
     "rows": [
       {
         "ambiguous": false,
+        "bundleID": "com.alsinas.sounddeck.toneA",
+        "gain": 0.20000000298023224,
+        "iconPresent": 1,
+        "muteAccessible": 1,
+        "muted": false,
+        "sliderAccessible": 1,
+        "touchTargetHeight": 44.0
+      },
+      {
+        "ambiguous": false,
         "bundleID": "com.alsinas.sounddeck.toneB",
         "gain": 0.800000011920929,
         "iconPresent": 1,
@@ -46,8 +66,8 @@
       },
       {
         "ambiguous": false,
-        "bundleID": "com.alsinas.sounddeck.toneA",
-        "gain": 0.20000000298023224,
+        "bundleID": "com.alsinas.sounddeck.media.ap",
+        "gain": 1.0,
         "iconPresent": 1,
         "muteAccessible": 1,
         "muted": false,
@@ -65,6 +85,16 @@
     "rows": [
       {
         "ambiguous": false,
+        "bundleID": "com.alsinas.sounddeck.toneA",
+        "gain": 0.20000000298023224,
+        "iconPresent": 1,
+        "muteAccessible": 1,
+        "muted": false,
+        "sliderAccessible": 1,
+        "touchTargetHeight": 44.0
+      },
+      {
+        "ambiguous": false,
         "bundleID": "com.alsinas.sounddeck.toneB",
         "gain": 0.800000011920929,
         "iconPresent": 1,
@@ -75,8 +105,8 @@
       },
       {
         "ambiguous": false,
-        "bundleID": "com.alsinas.sounddeck.toneA",
-        "gain": 0.20000000298023224,
+        "bundleID": "com.alsinas.sounddeck.media.ap",
+        "gain": 1.0,
         "iconPresent": 1,
         "muteAccessible": 1,
         "muted": false,
@@ -91,11 +121,28 @@
     "blockedReason": "The current windowing mode does not allow for programmatic changes to interface orientation."
   },
   "masterVolume": {
-    "changed": 0.05000000074505806,
-    "initial": 0.0625,
+    "changed": 0.15000000596046448,
+    "initial": 0.0,
     "method": "UIKit slider action to AVSystemController; measured with AVAudioSession.outputVolume",
-    "requested": 0.03125,
-    "restored": 0.05000000074505806,
-    "restoredNative": 0.0625
+    "requested": 0.15000000596046448,
+    "restored": 0.15000000596046448,
+    "restoredNative": 0.0
+  },
+  "controlCenter": {
+    "expandedRows": 2,
+    "captureBytes": 88140,
+    "masterTest": {
+      "after": 0.05000000074505806,
+      "before": 0.0,
+      "restored": 0.0,
+      "set": true,
+      "target": 0.05000000074505806
+    },
+    "preferencesPersisted": true,
+    "dismissal": {
+      "dismissRequested": true,
+      "host": "com.apple.springboard",
+      "presentedAfter": false
+    }
   }
 }

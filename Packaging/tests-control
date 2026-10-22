@@ -1,8 +1,8 @@
 Package: com.alsinas.sounddeck.tests
 Name: SoundDeck Test Signals
-Version: 0.1.0
+Version: 0.2.0
 Architecture: iphoneos-arm64
-Description: Optional quiet 440 and 880 Hz RemoteIO fixtures with independent post-render observers.
+Description: Optional generated audio fixtures for RemoteIO, AudioQueue, AVFoundation, AVAudioEngine and WebKit adapter testing.
 Maintainer: Sebastian Alsina <alsinas@me.com>
 Section: Development
-Depends: com.alsinas.sounddeck, uikittools
+Depends: com.alsinas.sounddeck (>= 0.2.0), uikittools

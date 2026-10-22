@@ -11,12 +11,13 @@
 #define SD_STATUS SD_DIR @"/status.plist"
 #define SD_CHANGED "com.alsinas.sounddeck.preferences"
 #define SD_GLOBAL "com.alsinas.sounddeck.global"
-#define SD_VERSION @"0.1.0"
+#define SD_VERSION @"0.2.0"
 static inline uint64_t SDGlobalState(NSDictionary *p);
 // notifyd is the cross-sandbox transport; no file access on audio threads or in clients.
 // config: gain in 0..1000, mute bit 10, enabled bit 11, mix bit 12.
 static inline NSString *SDGainName(NSString *bid) { return [@"com.alsinas.sounddeck.gain." stringByAppendingString:bid]; }
 static inline NSString *SDClientName(pid_t pid) { return [NSString stringWithFormat:@"com.alsinas.sounddeck.client.%d",pid]; }
+static inline NSString *SDProcessGainName(pid_t pid) { return [NSString stringWithFormat:@"com.alsinas.sounddeck.process-gain.%d",pid]; }
 static inline uint64_t SDConfig(NSDictionary *p, NSDictionary *a) {
     double gain = a[@"gain"] ? [a[@"gain"] doubleValue] : 1.;
     if (!isfinite(gain)) gain = 1.;
@@ -45,7 +46,18 @@ static inline BOOL SDFresh(uint64_t s) {
     return s && ((now - ((s>>46)&65535))&65535) < 4;
 }
 static inline NSString *SDPathName(unsigned n) {
-    return @[@"Waiting for audio",@"RemoteIO PCM",@"AudioQueue",@"AVPlayer",@"AVAudioPlayer",@"Sample buffer",@"Unsupported",@"Unknown"][n&7];
+    return @[@"Waiting for audio",@"AudioUnit PCM",@"AudioQueue",@"AVPlayer",@"AVAudioPlayer",@"Sample buffer",@"Unsupported",@"AVAudioEngine PCM"][n&7];
 }
 BOOL SDWritePrefs(NSDictionary *prefs, NSError **error);
 BOOL SDUpdatePrefs(NSDictionary *changes, NSError **error);
+static inline NSArray<NSDictionary *> *SDActiveApplications(NSDictionary *status) {
+    if(NSDate.date.timeIntervalSince1970-[status[@"timestamp"] doubleValue]>=4) return @[];
+    NSMutableDictionary *groups=[NSMutableDictionary new];
+    for(NSDictionary *client in status[@"clients"]) {
+        if(![client[@"active"] boolValue] || ![client[@"bundleID"] isKindOfClass:NSString.class]) continue;
+        NSString *bid=client[@"bundleID"]; NSMutableDictionary *entry=groups[bid];
+        if(!entry) { entry=[client mutableCopy]; entry[@"processCount"]=@1; groups[bid]=entry; }
+        else { entry[@"processCount"]=@([entry[@"processCount"] unsignedIntegerValue]+1); entry[@"controllable"]=@([entry[@"controllable"] boolValue] && [client[@"controllable"] boolValue]); entry[@"metered"]=@([entry[@"metered"] boolValue] || [client[@"metered"] boolValue]); entry[@"path"]=@"Multiple audio paths"; }
+    }
+    return [groups.allValues sortedArrayUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES],[NSSortDescriptor sortDescriptorWithKey:@"bundleID" ascending:YES]]];
+}

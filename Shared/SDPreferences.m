@@ -14,7 +14,7 @@ NSDictionary *SDSanitizePrefs(NSDictionary *input) {
         if(![bid isKindOfClass:NSString.class] || !bid.length || bid.length>255 || [bid rangeOfCharacterFromSet:invalid].location!=NSNotFound || ![source[bid] isKindOfClass:NSDictionary.class]) continue;
         NSDictionary *a=source[bid]; NSMutableDictionary *entry=[NSMutableDictionary new];
         if([a[@"gain"] isKindOfClass:NSNumber.class]) { double value=[a[@"gain"] doubleValue]; entry[@"gain"]=@(isfinite(value)?fmax(0.,fmin(1.,value)):1.); }
-        for(NSString *key in @[@"muted",@"enrolled"]) if([a[key] isKindOfClass:NSNumber.class]) entry[key]=@([a[key] boolValue]);
+        if([a[@"muted"] isKindOfClass:NSNumber.class]) entry[@"muted"]=@([a[@"muted"] boolValue]);
         if([a[@"name"] isKindOfClass:NSString.class] && [a[@"name"] length]<=512) entry[@"name"]=a[@"name"];
         apps[bid]=entry;
     }

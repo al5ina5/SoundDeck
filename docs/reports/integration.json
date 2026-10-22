@@ -9,20 +9,20 @@
       "pass": true,
       "evidence": {
         "com.alsinas.sounddeck.toneA": {
-          "inputRMS": 0.05641260395208667,
-          "outputRMS": 0.011276417181658656,
-          "ratio": 0.199892,
+          "inputRMS": 0.05683985656519417,
+          "outputRMS": 0.011367971313038834,
+          "ratio": 0.2,
           "active": true,
-          "independentPostRenderRMS": 0.011291676203555352,
-          "independentPostRenderBuffers": 562
+          "independentPostRenderRMS": 0.011352712291142137,
+          "independentPostRenderBuffers": 750
         },
         "com.alsinas.sounddeck.toneB": {
-          "inputRMS": 0.05641260395208667,
-          "outputRMS": 0.045136186770428015,
+          "inputRMS": 0.056565194171053636,
+          "outputRMS": 0.045258258945601586,
           "ratio": 0.800108,
           "active": true,
-          "independentPostRenderRMS": 0.04515144579232471,
-          "independentPostRenderBuffers": 374
+          "independentPostRenderRMS": 0.045136186770428015,
+          "independentPostRenderBuffers": 421
         }
       }
     },
@@ -31,20 +31,20 @@
       "pass": true,
       "evidence": {
         "com.alsinas.sounddeck.toneA": {
-          "inputRMS": 0.05653467612726024,
-          "outputRMS": 0.011306935225452048,
-          "ratio": 0.2,
+          "inputRMS": 0.05662623025864042,
+          "outputRMS": 0.011322194247348745,
+          "ratio": 0.199946,
           "active": true,
-          "independentPostRenderRMS": 0.011245899137865263,
-          "independentPostRenderBuffers": 422
+          "independentPostRenderRMS": 0.011367971313038834,
+          "independentPostRenderBuffers": 609
         },
         "com.alsinas.sounddeck.toneB": {
-          "inputRMS": 0.05636682688639658,
-          "outputRMS": 0.045090409704737926,
-          "ratio": 0.799946,
+          "inputRMS": 0.05676356145571069,
+          "outputRMS": 0.04541084916456855,
+          "ratio": 0.8,
           "active": true,
-          "independentPostRenderRMS": 0.0452124818799115,
-          "independentPostRenderBuffers": 280
+          "independentPostRenderRMS": 0.045426108186465246,
+          "independentPostRenderBuffers": 327
         }
       }
     },
@@ -53,20 +53,20 @@
       "pass": true,
       "evidence": {
         "com.alsinas.sounddeck.toneA": {
-          "inputRMS": 0.056443121995880065,
-          "outputRMS": 0.011276417181658656,
-          "ratio": 0.199784,
+          "inputRMS": 0.056733043411917296,
+          "outputRMS": 0.011337453269245441,
+          "ratio": 0.199839,
           "active": true,
-          "independentPostRenderRMS": 0.011322194247348745,
-          "independentPostRenderBuffers": 469
+          "independentPostRenderRMS": 0.011245899137865263,
+          "independentPostRenderBuffers": 656
         },
         "com.alsinas.sounddeck.toneB": {
-          "inputRMS": 0.05638208590829328,
-          "outputRMS": 0.04510566872663462,
-          "ratio": 0.8,
+          "inputRMS": 0.05633630884260319,
+          "outputRMS": 0.04507515068284123,
+          "ratio": 0.800108,
           "active": true,
-          "independentPostRenderRMS": 0.0452124818799115,
-          "independentPostRenderBuffers": 280
+          "independentPostRenderRMS": 0.045426108186465246,
+          "independentPostRenderBuffers": 327
         }
       }
     },
@@ -75,17 +75,17 @@
       "pass": true,
       "evidence": {
         "com.alsinas.sounddeck.toneA": {
-          "inputRMS": 0.056321049820706494,
-          "outputRMS": 0.01126115815976196,
-          "ratio": 0.199946,
+          "inputRMS": 0.05658045319295033,
+          "outputRMS": 0.011306935225452048,
+          "ratio": 0.199838,
           "active": true,
-          "independentPostRenderRMS": 0.011322194247348745,
-          "independentPostRenderBuffers": 469
+          "independentPostRenderRMS": 0.011337453269245441,
+          "independentPostRenderBuffers": 610
         },
         "com.alsinas.sounddeck.toneB": {
-          "inputRMS": 0.056488899061570154,
-          "outputRMS": 0.045181963836118104,
-          "ratio": 0.799838,
+          "inputRMS": 0.05676356145571069,
+          "outputRMS": 0.04541084916456855,
+          "ratio": 0.8,
           "active": true,
           "independentPostRenderRMS": 0.045426108186465246,
           "independentPostRenderBuffers": 327
@@ -97,20 +97,20 @@
       "pass": true,
       "evidence": {
         "com.alsinas.sounddeck.toneA": {
-          "inputRMS": 0.05679407949950408,
+          "inputRMS": 0.05624475471122301,
           "outputRMS": 0,
           "ratio": 0.0,
           "active": true,
           "independentPostRenderRMS": 0.0,
-          "independentPostRenderBuffers": 703
+          "independentPostRenderBuffers": 844
         },
         "com.alsinas.sounddeck.toneB": {
-          "inputRMS": 0.05633630884260319,
-          "outputRMS": 0.04505989166094453,
-          "ratio": 0.799837,
+          "inputRMS": 0.05679407949950408,
+          "outputRMS": 0.04544136720836194,
+          "ratio": 0.800107,
           "active": true,
-          "independentPostRenderRMS": 0.04524299992370489,
-          "independentPostRenderBuffers": 515
+          "independentPostRenderRMS": 0.04507515068284123,
+          "independentPostRenderBuffers": 608
         }
       }
     },
@@ -119,20 +119,20 @@
       "pass": true,
       "evidence": {
         "com.alsinas.sounddeck.toneA": {
-          "inputRMS": 0.05650415808346685,
-          "outputRMS": 0.011291676203555352,
-          "ratio": 0.199838,
+          "inputRMS": 0.05624475471122301,
+          "outputRMS": 0.011245899137865263,
+          "ratio": 0.199946,
           "active": true,
-          "independentPostRenderRMS": 0.011291676203555352,
-          "independentPostRenderBuffers": 937
+          "independentPostRenderRMS": 0.011306935225452048,
+          "independentPostRenderBuffers": 1078
         },
         "com.alsinas.sounddeck.toneB": {
-          "inputRMS": 0.056610971236743725,
-          "outputRMS": 0.04528877698939498,
-          "ratio": 0.8,
+          "inputRMS": 0.05679407949950408,
+          "outputRMS": 0.04544136720836194,
+          "ratio": 0.800107,
           "active": true,
-          "independentPostRenderRMS": 0.04515144579232471,
-          "independentPostRenderBuffers": 749
+          "independentPostRenderRMS": 0.045426108186465246,
+          "independentPostRenderBuffers": 843
         }
       }
     },
@@ -141,20 +141,20 @@
       "pass": true,
       "evidence": {
         "com.alsinas.sounddeck.toneA": {
-          "inputRMS": 0.05662623025864042,
-          "outputRMS": 0.0396429388876173,
-          "ratio": 0.700081,
+          "inputRMS": 0.056275272755016405,
+          "outputRMS": 0.03938353551537346,
+          "ratio": 0.699837,
           "active": true,
-          "independentPostRenderRMS": 0.03976501106279087,
-          "independentPostRenderBuffers": 1125
+          "independentPostRenderRMS": 0.03936827649347677,
+          "independentPostRenderBuffers": 1313
         },
         "com.alsinas.sounddeck.toneB": {
-          "inputRMS": 0.05674830243381399,
-          "outputRMS": 0.04539559014267185,
-          "ratio": 0.799946,
+          "inputRMS": 0.05676356145571069,
+          "outputRMS": 0.04541084916456855,
+          "ratio": 0.8,
           "active": true,
-          "independentPostRenderRMS": 0.04507515068284123,
-          "independentPostRenderBuffers": 937
+          "independentPostRenderRMS": 0.0452124818799115,
+          "independentPostRenderBuffers": 1030
         }
       }
     },
@@ -163,20 +163,20 @@
       "pass": true,
       "evidence": {
         "com.alsinas.sounddeck.toneA": {
-          "inputRMS": 0.05683985656519417,
-          "outputRMS": 0.011367971313038834,
-          "ratio": 0.2,
+          "inputRMS": 0.05626001373311971,
+          "outputRMS": 0.011245899137865263,
+          "ratio": 0.199892,
           "active": true,
-          "independentPostRenderRMS": 0.01126115815976196,
-          "independentPostRenderBuffers": 3515
+          "independentPostRenderRMS": 0.011306935225452048,
+          "independentPostRenderBuffers": 3703
         },
         "com.alsinas.sounddeck.toneB": {
-          "inputRMS": 0.05636682688639658,
-          "outputRMS": 0.045090409704737926,
-          "ratio": 0.799946,
+          "inputRMS": 0.05679407949950408,
+          "outputRMS": 0.04544136720836194,
+          "ratio": 0.800107,
           "active": true,
-          "independentPostRenderRMS": 0.045426108186465246,
-          "independentPostRenderBuffers": 3327
+          "independentPostRenderRMS": 0.045136186770428015,
+          "independentPostRenderBuffers": 3421
         }
       }
     },
@@ -190,20 +190,20 @@
       "pass": true,
       "evidence": {
         "com.alsinas.sounddeck.toneA": {
-          "inputRMS": 0.05662623025864042,
-          "outputRMS": 0.011322194247348745,
-          "ratio": 0.199946,
+          "inputRMS": 0.05687037460898756,
+          "outputRMS": 0.011367971313038834,
+          "ratio": 0.199893,
           "active": true,
-          "independentPostRenderRMS": 0.011367971313038834,
-          "independentPostRenderBuffers": 234
+          "independentPostRenderRMS": 0.01126115815976196,
+          "independentPostRenderBuffers": 280
         },
         "com.alsinas.sounddeck.toneB": {
-          "inputRMS": 0.05638208590829328,
-          "outputRMS": 0.04510566872663462,
-          "ratio": 0.8,
+          "inputRMS": 0.05636682688639658,
+          "outputRMS": 0.045090409704737926,
+          "ratio": 0.799946,
           "active": true,
-          "independentPostRenderRMS": 0.045136186770428015,
-          "independentPostRenderBuffers": 3796
+          "independentPostRenderRMS": 0.0452124818799115,
+          "independentPostRenderBuffers": 4030
         }
       }
     },
@@ -212,20 +212,20 @@
       "pass": true,
       "evidence": {
         "com.alsinas.sounddeck.toneA": {
-          "inputRMS": 0.05687037460898756,
-          "outputRMS": 0.011367971313038834,
-          "ratio": 0.199893,
+          "inputRMS": 0.05674830243381399,
+          "outputRMS": 0.011337453269245441,
+          "ratio": 0.199785,
           "active": true,
-          "independentPostRenderRMS": 0.011367971313038834,
-          "independentPostRenderBuffers": 468
+          "independentPostRenderRMS": 0.01126115815976196,
+          "independentPostRenderBuffers": 515
         },
         "com.alsinas.sounddeck.toneB": {
-          "inputRMS": 0.05676356145571069,
-          "outputRMS": 0.04541084916456855,
-          "ratio": 0.8,
+          "inputRMS": 0.05667200732433051,
+          "outputRMS": 0.04533455405508507,
+          "ratio": 0.799946,
           "active": true,
-          "independentPostRenderRMS": 0.04533455405508507,
-          "independentPostRenderBuffers": 4031
+          "independentPostRenderRMS": 0.04524299992370489,
+          "independentPostRenderBuffers": 4265
         }
       }
     },
@@ -234,20 +234,20 @@
       "pass": true,
       "evidence": {
         "com.alsinas.sounddeck.toneA": {
-          "inputRMS": 0.05647364003967346,
-          "outputRMS": 0.011291676203555352,
-          "ratio": 0.199946,
+          "inputRMS": 0.05674830243381399,
+          "outputRMS": 0.011337453269245441,
+          "ratio": 0.199785,
           "active": true,
           "independentPostRenderRMS": 0.011367971313038834,
-          "independentPostRenderBuffers": 702
+          "independentPostRenderBuffers": 843
         },
         "com.alsinas.sounddeck.toneB": {
-          "inputRMS": 0.05676356145571069,
-          "outputRMS": 0.04541084916456855,
-          "ratio": 0.8,
+          "inputRMS": 0.05667200732433051,
+          "outputRMS": 0.04533455405508507,
+          "ratio": 0.799946,
           "active": true,
-          "independentPostRenderRMS": 0.04507515068284123,
-          "independentPostRenderBuffers": 4312
+          "independentPostRenderRMS": 0.045136186770428015,
+          "independentPostRenderBuffers": 4546
         }
       }
     },
@@ -256,20 +256,20 @@
       "pass": true,
       "evidence": {
         "com.alsinas.sounddeck.toneA": {
-          "inputRMS": 0.056397344930189976,
-          "outputRMS": 0.056397344930189976,
+          "inputRMS": 0.05626001373311971,
+          "outputRMS": 0.05626001373311971,
           "ratio": 1.0,
           "active": true,
-          "independentPostRenderRMS": 0.05650415808346685,
-          "independentPostRenderBuffers": 937
+          "independentPostRenderRMS": 0.05687037460898756,
+          "independentPostRenderBuffers": 1077
         },
         "com.alsinas.sounddeck.toneB": {
-          "inputRMS": 0.056321049820706494,
-          "outputRMS": 0.056321049820706494,
+          "inputRMS": 0.056778820477607385,
+          "outputRMS": 0.056778820477607385,
           "ratio": 1.0,
           "active": true,
-          "independentPostRenderRMS": 0.056443121995880065,
-          "independentPostRenderBuffers": 4499
+          "independentPostRenderRMS": 0.05651941710536355,
+          "independentPostRenderBuffers": 4780
         }
       }
     },
@@ -278,20 +278,20 @@
       "pass": true,
       "evidence": {
         "com.alsinas.sounddeck.toneA": {
-          "inputRMS": 0.05685511558709087,
-          "outputRMS": 0.011367971313038834,
+          "inputRMS": 0.05624475471122301,
+          "outputRMS": 0.011245899137865263,
           "ratio": 0.199946,
           "active": true,
-          "independentPostRenderRMS": 0.011245899137865263,
-          "independentPostRenderBuffers": 422
+          "independentPostRenderRMS": 0.01126115815976196,
+          "independentPostRenderBuffers": 515
         },
         "com.alsinas.sounddeck.toneB": {
-          "inputRMS": 0.05662623025864042,
-          "outputRMS": 0.04528877698939498,
-          "ratio": 0.799784,
+          "inputRMS": 0.0567025253681239,
+          "outputRMS": 0.045349813076981764,
+          "ratio": 0.799785,
           "active": true,
-          "independentPostRenderRMS": 0.04533455405508507,
-          "independentPostRenderBuffers": 281
+          "independentPostRenderRMS": 0.045426108186465246,
+          "independentPostRenderBuffers": 327
         }
       }
     },
@@ -300,25 +300,25 @@
       "pass": true,
       "evidence": {
         "com.alsinas.sounddeck.toneA": {
-          "inputRMS": 0.05683985656519417,
-          "outputRMS": 0.011367971313038834,
-          "ratio": 0.2,
+          "inputRMS": 0.0567025253681239,
+          "outputRMS": 0.011337453269245441,
+          "ratio": 0.199946,
           "active": true,
-          "independentPostRenderRMS": 0.011306935225452048,
-          "independentPostRenderBuffers": 9703
+          "independentPostRenderRMS": 0.011352712291142137,
+          "independentPostRenderBuffers": 2250
         },
         "com.alsinas.sounddeck.toneB": {
-          "inputRMS": 0.05638208590829328,
-          "outputRMS": 0.04510566872663462,
-          "ratio": 0.8,
+          "inputRMS": 0.05679407949950408,
+          "outputRMS": 0.04544136720836194,
+          "ratio": 0.800107,
           "active": true,
-          "independentPostRenderRMS": 0.04538033112077516,
-          "independentPostRenderBuffers": 9609
+          "independentPostRenderRMS": 0.04507515068284123,
+          "independentPostRenderBuffers": 2062
         }
       },
-      "durationSeconds": 198.8,
-      "serviceCPUPercentOneCore": 1.364,
-      "servicePeakRSSBytes": 5767168
+      "durationSeconds": 36.9,
+      "serviceCPUPercentOneCore": 1.33,
+      "servicePeakRSSBytes": 4964352
     }
   ]
 }

@@ -1,0 +1,197 @@
+{
+  "device": "iPad7,5",
+  "os": "17.7.8 (21H440)",
+  "humanListeningConfirmed": false,
+  "results": [
+    {
+      "test": "aq 40% of base 0.9",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.aq",
+      "path": "AudioQueue",
+      "gain": 0.4,
+      "nativeBase": 0.9,
+      "nativeVolume": 0.36
+    },
+    {
+      "test": "aq follows host volume change to 0.6",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.aq",
+      "path": "AudioQueue",
+      "gain": 0.4,
+      "nativeBase": 0.6,
+      "nativeVolume": 0.24
+    },
+    {
+      "test": "aq mute zeroes native volume",
+      "pass": true,
+      "nativeVolume": 0,
+      "nativeBase": 0.6
+    },
+    {
+      "test": "aq unmute restores base",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.aq",
+      "path": "AudioQueue",
+      "gain": 1,
+      "nativeBase": 0.6,
+      "nativeVolume": 0.6
+    },
+    {
+      "test": "avp 40% of base 0.9",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.avp",
+      "path": "AVPlayer",
+      "gain": 0.4,
+      "nativeBase": 0.9,
+      "nativeVolume": 0.36
+    },
+    {
+      "test": "avp follows host volume change to 0.6",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.avp",
+      "path": "AVPlayer",
+      "gain": 0.4,
+      "nativeBase": 0.6,
+      "nativeVolume": 0.24
+    },
+    {
+      "test": "avp mute zeroes native volume",
+      "pass": true,
+      "nativeVolume": 0,
+      "nativeBase": 0.6
+    },
+    {
+      "test": "avp unmute restores base",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.avp",
+      "path": "AVPlayer",
+      "gain": 1,
+      "nativeBase": 0.6,
+      "nativeVolume": 0.6
+    },
+    {
+      "test": "ap 40% of base 0.9",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.ap",
+      "path": "AVAudioPlayer",
+      "gain": 0.4,
+      "nativeBase": 0.9,
+      "nativeVolume": 0.36
+    },
+    {
+      "test": "ap follows host volume change to 0.6",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.ap",
+      "path": "AVAudioPlayer",
+      "gain": 0.4,
+      "nativeBase": 0.6,
+      "nativeVolume": 0.24
+    },
+    {
+      "test": "ap mute zeroes native volume",
+      "pass": true,
+      "nativeVolume": 0,
+      "nativeBase": 0.6
+    },
+    {
+      "test": "ap unmute restores base",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.ap",
+      "path": "AVAudioPlayer",
+      "gain": 1,
+      "nativeBase": 0.6,
+      "nativeVolume": 0.6
+    },
+    {
+      "test": "sbr 40% of base 0.9",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.sbr",
+      "path": "Sample buffer",
+      "gain": 0.4,
+      "nativeBase": 0.9,
+      "nativeVolume": 0.36
+    },
+    {
+      "test": "sbr follows host volume change to 0.6",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.sbr",
+      "path": "Sample buffer",
+      "gain": 0.4,
+      "nativeBase": 0.6,
+      "nativeVolume": 0.24
+    },
+    {
+      "test": "sbr mute zeroes native volume",
+      "pass": true,
+      "nativeVolume": 0,
+      "nativeBase": 0.6
+    },
+    {
+      "test": "sbr unmute restores base",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.sbr",
+      "path": "Sample buffer",
+      "gain": 1,
+      "nativeBase": 0.6,
+      "nativeVolume": 0.6
+    },
+    {
+      "test": "AVAudioEngine 60% PCM",
+      "pass": true,
+      "inputRMS": 0.056610971236743725,
+      "outputRMS": 0.03396658274204623,
+      "ratio": 0.6,
+      "independentPostRenderRMS": 0.033997100785839625,
+      "independentBuffers": 328
+    },
+    {
+      "test": "aq simultaneous independent gain",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.aq",
+      "path": "AudioQueue",
+      "gain": 0.2,
+      "nativeBase": 0.9,
+      "nativeVolume": 0.18
+    },
+    {
+      "test": "avp simultaneous independent gain",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.avp",
+      "path": "AVPlayer",
+      "gain": 0.35,
+      "nativeBase": 0.9,
+      "nativeVolume": 0.315
+    },
+    {
+      "test": "ap simultaneous independent gain",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.ap",
+      "path": "AVAudioPlayer",
+      "gain": 0.5,
+      "nativeBase": 0.9,
+      "nativeVolume": 0.45
+    },
+    {
+      "test": "sbr simultaneous independent gain",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.sbr",
+      "path": "Sample buffer",
+      "gain": 0.8,
+      "nativeBase": 0.9,
+      "nativeVolume": 0.72
+    },
+    {
+      "test": "AudioQueue relaunch restores preference",
+      "pass": true,
+      "bundleID": "com.alsinas.sounddeck.media.aq",
+      "path": "AudioQueue",
+      "gain": 0.25,
+      "nativeBase": 0.9,
+      "nativeVolume": 0.225
+    },
+    {
+      "test": "five adapters run concurrently",
+      "pass": true
+    }
+  ]
+}

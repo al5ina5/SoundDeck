@@ -1,68 +1,43 @@
-# Real-device validation — experimental 0.1.0
+# Real-device validation — experimental 0.2.0
 
-Tested directly on **iPad7,5, A10 arm64, iPadOS 17.7.8 (21H440), rootless palera1n / Procursus / ElleKit 1.2**, October 21–22, 2026. Compilation, signing, packaging, installation, launch, debugging and testing were local to this device.
+Tested directly on **iPad7,5 (iPad 6th generation), A10 arm64, iPadOS 17.7.8 (21H440), rootless palera1n / Procursus / ElleKit 1.2**, October 22, 2026. Compilation, signing, packaging, installation and tests were performed on-device.
 
-## What the evidence proves
+Reports: [RemoteIO integration](reports/integration.json) · [framework adapters](reports/media.json) · [WebKit](reports/web.json) · [UI/Control Center](reports/ui.json) · [package lifecycle](reports/lifecycle.json).
 
-Two separate native applications generate continuous 440 Hz and 880 Hz signals through direct RemoteIO callbacks. Both deliberately request a **nonmixing** playback category; SoundDeck must provide the compatible mixing option. Each signal's peak amplitude is 0.08 to avoid loud test output.
+## Audio evidence and what it means
 
-The injected callback measures input/output PCM. Separately, each test app registers its **own Core Audio post-render observer**, which sees the buffer after the injected gain wrapper returns. These observers do not call SoundDeck's gain function. Their buffer counters and RMS independently confirm that audio is actually rendering and being changed, not merely that a requested slider value was stored.
+Two QA apps render continuous 440 Hz and 880 Hz signals through direct RemoteIO callbacks. Each deliberately starts with a nonmixing playback category; SoundDeck enables playback mixing. Input/output PCM is measured in the injected callback and independently by each fixture's own Core Audio post-render observer. These numbers validate digital PCM before device output; they are not a microphone/loopback capture, acoustic loudness measurement or human listening result.
 
-This is **digital PCM validation before device output**, not a microphone recording, loopback capture, acoustic loudness measurement or human listening test. **No human audible result is claimed.** It does not certify an unsupported application's complete pipeline.
+Additional fixture adapters were verified as follows:
 
-## Final normal-package results
+- **AudioQueue:** actual parameter values tracked base 0.9 × app gain 0.4 = 0.36; base changed to 0.6 and actual became 0.24; mute set volume to 0.
+- **AVPlayer and AVAudioPlayer:** actual native volume tracked 0.9 × 0.4 = 0.36, followed host base 0.6 to 0.24, and mute set volume to 0.
+- **AVSampleBufferAudioRenderer:** actual volume tracked 0.9 × 0.4 = 0.36, followed the host base and mute.
+- **AVAudioEngine:** at gain 0.6, service output/input RMS ratio was 0.600000; an independent post-render observer measured 0.033997 RMS versus service output 0.033967 RMS. Mute output was zero while input continued.
+- **WebKit Web Audio:** coalition attribution resolved the GPU subprocess to the fixture app; measured PCM output/input ratio was 0.349947 at 35%, and mute output was zero.
+- **WebKit HTML media:** attributed GPU process reported AVPlayer native volume 0.35 at 35%; mute set it to zero.
+- **Concurrency:** AudioQueue, AVPlayer, AVAudioPlayer, AVAudioEngine PCM and sample-buffer fixtures ran in five distinct app processes at different gains simultaneously.
 
-[Full measured integration report](reports/integration.json) · [Package/service recovery report](reports/lifecycle.json) · [QA UIKit action/layout report](reports/ui.json)
+Native-parameter tests prove the framework volume property/parameter SoundDeck writes and reads. They are not equivalent to independently measured acoustic output. WebKit results establish the fixture's paths only, not Safari or arbitrary pages/apps.
 
-| Test | Result |
-|---|---|
-| App launches / backend and actual producers discovered | Pass |
-| Both signal apps render concurrently | Pass |
-| A at 20%, B at 80% | **0.199892 / 0.800108 measured PCM gain** |
-| Independent post-render observers | Pass, nonzero progressing buffer counters and expected RMS |
-| Three additional cold launch pairs | Pass |
-| A mute without changing B | Pass, A's output PCM zero; B remains at 80% |
-| Unmute / independent adjustment | Pass |
-| 60 rapid gain and mute cycles | Pass |
-| Terminated PID disappears / app relaunch restores gain | Pass |
-| Both apps backgrounded with mixer foreground | Pass |
-| Mixer restart retains preferences | Pass |
-| Bypass restores unity / re-enable restores mix | Pass |
-| Extended background render segment | Pass, **198.8 seconds** in the final run |
-| Service PID remains unchanged during integration run | Pass |
-| Service-loss watchdog | Pass, independent observer returns approximately 0.05679 RMS at unity |
-| Package upgrade preserves enabled state and gains | Pass |
-| Actual package uninstall restores native nonmixing / unity | Pass, approximately 0.05632 RMS; first native app is interrupted by second |
-| Package reinstalled and app relaunched afterward | Pass |
-| Archive architecture, paths, owners, executable identity, load paths, absence of QA controls | Pass |
+## Core PCM, watchdog and lifecycle
 
-During the final extended segment, reported service CPU usage was **1.364% of one core** and peak RSS **5,767,168 bytes**. These are `getrusage`-based service measurements, not total system/tweak power measurements. No multi-hour endurance or battery-life claim is made.
+The latest integration run used a 30-second requested soak; the measured segment was 36.9 seconds. It passed concurrent 20%/80% playback, three cold-launch pairs, mute isolation/unmute, independent gain, 60 rapid gain/mute cycles, PID removal and preference restoration, backgrounding with the mixer foreground, dashboard restart, bypass/unity, re-enable and extended rendering. Measured PCM ratios were approximately 0.20 and 0.80. The service remained at one PID; reported CPU was 1.33% of one core and peak RSS 4,964,352 bytes for this run. This is not a multi-hour endurance or battery test.
 
-## UI and master volume
+The lifecycle suite passed service-loss watchdog recovery, package upgrade preserving enabled state/gains, actual SoundDeck uninstall restoring native session behavior/unity PCM, and reinstall. Service-loss/uninstall observer RMS was approximately 0.0564/0.0566 at unity. Package validation passed rootless paths, arm64 architecture, owners, Mach-O signatures/identity and absence of QA controls.
 
-The QA build drives **real UIKit slider and mute control actions**, checks the actual backend state, captures native light/dark landscape layouts, checks icon presence/accessibility labels, verifies at least 44pt mute controls and checks row constraints for ambiguity. These are scripted actions, **not human physical-touch or VoiceOver tests**. The normal release app excludes these QA control hooks.
+## UI and Control Center
 
-The system media master slider action was exercised through the real `AVSystemController` adapter, with `AVAudioSession.outputVolume` providing an independent observation. The final QA sample started at native level 0.0625, observed a lowered output level of 0.05 and restored native level 0.0625. System output reporting is quantized/cached; the test allows 0.025 discrepancy and publishes the raw observations rather than claiming exact acoustic restoration.
+The QA dashboard suite drove real UIKit slider/mute actions and verified backend gains, light/dark landscape layout, icons, accessibility labels, 44pt mute targets, master media-volume set/restore and row constraints. The Control Center suite opened/expanded the real CCSupport module, drove two app sliders, checked live backend changes and saved preferences, exercised the master setter, and captured the module. These are scripted control actions and accessibility metadata checks, not physical touch, animation or VoiceOver testing.
 
-Portrait automation returned the actual system error:
+The latest master-volume sample started at native level 0, requested 0.15, observed `AVAudioSession.outputVolume` 0.15, and confirmed the native getter restored to 0. The Control Center setter independently changed 0 to 0.05 and restored the native getter to 0. The dashboard's `AVAudioSession.outputVolume` restore observation remained cached at 0.15; the native getter is used as the restoration check. System output reporting is quantized/cached; raw observations are retained in the report.
+
+Portrait automation received the system error:
 
 > The current windowing mode does not allow for programmatic changes to interface orientation.
 
-The app declares portrait/landscape and uses scene-based adaptive constraints. No system orientation lock or unrelated setting was changed to force a passing screenshot. **Portrait remains unverified.** Public images are cropped native-window layer captures, not simulator renders; system chrome/live blur are omitted.
+Portrait is declared and adaptive layout code is present, but portrait remains unverified. Captures are native layer captures of SoundDeck's own view; they omit system chrome/live blur and do not show a physical Control Center screen.
 
-## Failures encountered and changes made
+## Not verified
 
-- Corrected compiler/linker flags and package permissions; fixed shared status-file ownership before release.
-- Added explicit preferences validation, per-field locked merges, isolated malformed-input tests and 60 concurrent preference transactions.
-- An earlier service build accumulated autoreleased objects during notification stress; explicit callback autorelease pools and enrollment/metadata caches replaced that behavior. An older service was observed in a per-process-limit jetsam report. The final measured run maintains one service PID and bounded reported RSS.
-- Earlier discovery could stall or become stale while probing unrelated processes. Manifest reads are now limited to installed, fresh participating clients, and notify registration tokens are cached. The final extended run and watchdog/recovery tests pass. Longer-duration scheduling and system-pressure behavior remain a prerelease risk, not certified reliability.
-- Initial configuration is reread at audio activation. The harness now waits for a **new fixture PID with independently observed render buffers** before switching foreground apps; FrontBoard's launch completion alone was not an audio-ready signal on this loaded older iPad.
-- Corrected upgrade scripts so an enabled mixer does not remain unintentionally bypassed after upgrade.
-- Normalized a rootful ElleKit dependency advertised by the local compatibility library to an explicit rootless runtime path, then validated/retested the installable normal package.
-- Raw display/IOSurface capture was unavailable in this context. Used opt-in capture of SoundDeck's own real UIKit window layers instead.
-
-## Not passed off as tested
-
-No Safari video/WebAudio gain verification, YouTube/Spotify testing (not installed), personal Music-library playback, protected streaming, AudioQueue support, general AVAudioEngine graphs, headphones/Bluetooth/AirPlay transitions, incoming-call recovery, human listening, physical touch/animation smoothness review, all Dynamic Type sizes or multi-hour stability certification. The AVPlayer adapter is implemented but unverified. See the [compatibility matrix](COMPATIBILITY.md).
-
-This is therefore a **limited-compatibility experimental prerelease**, not completion of a universal iPad audio mixer.
+No human listening or acoustic measurement; Safari/YouTube/Spotify/commercial browser or DRM tests; personal Music-library playback; every third-party app/audio graph; headphones/Bluetooth/AirPlay/headset route transitions; incoming-call/Siri recovery; physical touch or VoiceOver review; full Dynamic Type range; Split View/Slide Over; portrait; or multi-hour endurance. The release is still **experimental**. See [compatibility](COMPATIBILITY.md).

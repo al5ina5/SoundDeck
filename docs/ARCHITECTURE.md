@@ -1,44 +1,38 @@
 # Architecture and safety
 
-## Audio path
+## Discovery and injection
 
-The tweak is injected only into bundle identifiers in its ElleKit filter. The service derives enrolled IDs from validated preferences and checks them against installed `.app` bundles. SpringBoard and SoundDeck itself are excluded. Only the two optional fixture IDs are enabled by default. No audio daemon, SpringBoard, WebKit-wide or recording-process hook is installed.
+The rootless package installs an ElleKit filter for UIKit app processes, with runtime guards against system helpers, SpringBoard and SoundDeck itself. This broad filter is required for automatic discovery; there is no user enrollment allowlist. Audio code publishes a fresh per-PID telemetry token only while its supported output is active. The service resolves live app identity/metadata and groups records by bundle ID. A running app without an active supported output does not become a fake active row.
 
-For a direct RemoteIO playback render callback (bus 0), SoundDeck preserves the original callback and refcon in a fixed process-lifetime context, invokes it, then attenuates the returned PCM buffer **in place** before returning it to Core Audio. Gain is per process, read through a lock-free atomic float; mute is zero gain. There is no global device-volume manipulation in this path. A five-millisecond linear ramp reduces gain-step clicks. The app's own signal level is preserved multiplicatively.
+A separate WebKit filter targets WebContent and GPU subprocesses. The service resolves subprocess ownership from coalition identity and exposes it under the host app only when that mapping is unambiguous. Unknown/ambiguous owners remain uncontrollable. WebKit fixture verification on iOS 17.7.8 covered a GPU-process Web Audio PCM path and an HTML media/AVPlayer path; it does not certify all WebKit process layouts or Safari.
 
-PCM layouts accepted by the implementation are packed little-endian Float32, signed Int16 and signed Int32, interleaved or planar. Only mono Float32 has been measured on this device. Unknown layouts fail open. Recording buses and VoiceProcessingIO are not intercepted. AudioUnit connections that do not expose this callback are outside the implementation.
+## Audio paths
 
-The AVPlayer adapter separately remembers requested volume per weakly tracked player object and applies an app factor to native setters. If a RemoteIO path is present, it takes priority to avoid obvious double gain. **Hybrid apps can have uncontrolled outputs; this is not a general per-process hardware mixer.** AVPlayer's real-world signal behavior is unverified.
+- **RemoteIO / AudioUnit PCM:** retain original callback/refcon, invoke it, then attenuate the returned PCM in place before Core Audio consumes it. Gain is a lock-free atomic; a short ramp reduces steps/clicks. Packed Float32, Int16 and Int32 conversion is implemented; unknown formats fail open. RemoteIO plus AVAudioEngine fixture outputs were numerically measured.
+- **AudioQueue:** preserves host volume and applies a per-queue factor through native queue parameters.
+- **AVPlayer / AVAudioPlayer / AVSampleBufferAudioRenderer:** weakly tracks renderer/player objects, remembers host-requested base volume and writes base × per-app gain; a host volume change updates the base rather than erasing the app factor.
+- **AVAudioEngine/AU providers and graph callbacks:** wraps qualifying output providers/PCM callbacks. This cannot guarantee coverage of every engine graph, remote renderer or app-specific route.
+- **AVAudioSession:** playback/solo-ambient activation may be changed to playback + `MixWithOthers`, preserving route options while excluding recording, PlayAndRecord, MultiRoute and VoiceProcessingIO. Original options are restored on bypass only when the session still matches SoundDeck's applied settings. Apps may still pause themselves or change pipelines.
 
-`AVAudioSession` playback/solo-ambient activation is changed to playback + `MixWithOthers`, preserving other route options and excluding recording categories. SoundDeck does not force incoming calls, Siri or system interruptions to mix. It remembers the original category/mode/options and restores them on bypass only while the session is still playback. Subsequent recording-category changes are left alone. Complex playback-category reconfiguration after the original snapshot is not validated and can restore earlier options; bypass before such reconfiguration. An application may still stop itself when backgrounded or refuse to mix.
+There is no public iOS per-process hardware-volume API. Hybrid apps can have multiple simultaneously active paths; coverage depends on which supported adapter owns the actual output. No audio is recorded, retained or inspected.
 
 ## Real-time constraints
 
-- No Objective-C messaging, allocations, logging, IPC, file access or blocking locks in the render wrapper.
-- Gain, format kind, ramp duration, sample counters and RMS publication use lock-free atomics.
-- RMS calculation is numeric only. Audio is not recorded or retained.
-- At most 128 lifetime contexts per process; disposal retires rather than frees them, avoiding callback use-after-free. Exhaustion leaves new units unchanged.
-- Unit setup/reconfiguration/disposal is serialized away from render callbacks. Hosts must obey Core Audio's stop-before-reconfiguration rules.
-- Main-queue heartbeat and preference callbacks do IPC and native object control. They never wait on the audio callback.
+- No Objective-C messaging, allocations, logging, IPC, file access or blocking locks in the PCM render callback.
+- Gain, format kind, ramp duration and meter counters use lock-free atomics.
+- RMS is numeric telemetry only; no sample content is retained.
+- Fixed process-lifetime unit contexts avoid callback use-after-free; capacity exhaustion leaves new units unchanged.
+- Audio object setup/reconfiguration is serialized away from render callbacks. Hosts must obey Core Audio stop-before-reconfiguration rules.
+- Ordinary client notifications/heartbeat use a dispatch queue; WebKit extensions use a dedicated polling thread because their host run-loop/dispatch servicing differs.
 
-## IPC and discovery
+## IPC, persistence and master volume
 
-notifyd transports compact 64-bit configuration and heartbeat state across app sandboxes. Clients never open shared preference files. Each gain namespace is keyed by the real bundle ID; each activity namespace is keyed by PID. The service enumerates live application processes, resolves their actual bundle manifests, and accepts only fresh client telemetry. It does not mistake merely running installed apps for audio producers.
+notifyd transports compact configuration, activity and per-process state across app sandboxes. Clients do not read the shared preference file. The service publishes timestamped global state; clients fail open to unity when backend state goes stale. Per-app preferences are validated, field-merged under a lock and atomically replaced. GUI edits publish live via notifyd and persist with a debounce.
 
-The service publishes a timestamped global state once per second. Clients bypass after approximately five seconds without it. The GUI reports stale service state instead of presenting stale activity as live.
+The master slider uses the runtime-resolved `AVSystemController` media-volume API for the `Audio/Video` category, with `MPVolumeView` fallback in the dashboard. It changes system media volume, not each app's base or ringer/call/record level; route selection remains native.
 
-Preference writes use an advisory file lock, schema validation, per-field transactional merges and atomic replacement. GUI persistence is debounced; live slider updates use notifyd immediately. Restarted clients receive saved configuration from the service without needing the GUI to remain open.
+## Privilege and privacy
 
-The service caches installed-app checks until enrollment changes, bundle metadata and per-PID notify tokens. It queries freshness before reading manifests and excludes non-installation/File Provider app paths. One-second discovery/diagnostic snapshots remain a polling tradeoff in this prerelease; they have not been replaced by private system lifecycle notifications. Each dispatch callback has its own autorelease pool to prevent notification-stress memory growth.
+The service retains root identity for the fixed injection-filter operation only. Preference, process metadata and status handling use mobile identity. Filter input is constrained and written to a fixed path. The app/tweak use jailbreak platform entitlements; this is not an App Store sandbox model. Local notify state is not authenticated against hostile processes on a jailbroken device.
 
-## Master volume
-
-The native UIKit master slider uses the device's `AVSystemController` media-volume API (`Audio/Video` category), resolved at runtime from Celestial. Availability is checked. If unavailable, the UI falls back to `MPVolumeView`. Native route selection remains `MPVolumeView`; no route is forcibly selected. Calls, ringer and recording levels are not changed. The master API was verified against `AVAudioSession.outputVolume` on this device, lowering and restoring the original level.
-
-## Trust and privilege
-
-The service retains real/saved root identity for one fixed operation: replacing `/var/jb/Library/MobileSubstrate/DynamicLibraries/SoundDeck.plist`. Its effective identity is mobile for preference, process-metadata and status-file processing. Filter input is schema-validated, restricted to bundle-ID characters, checked against installed applications, and written only to a fixed root-owned path. It does not execute commands received from apps or accept arbitrary file destinations.
-
-The app is signed as a jailbreak platform/no-container application so it can read its shared diagnostics and enumerate installed application identities. This is not an App Store sandbox model. notifyd gain messages are **not authenticated** against other local processes; this is a usability/control channel on an already-jailbroken device, not a security boundary. A hostile local process may spoof notifications or telemetry. Do not expose any of this through a network service.
-
-Diagnostics include bundle IDs/names, PID, path type, applied gain, numeric RMS, service resource counters and timestamps. They exclude media URLs, song names, audio recordings, browser history and tokens. Opt-in `sdctl capture` captures only SoundDeck's own view hierarchy into its private directory.
+Diagnostics include bundle IDs/names, PID, path type, gain, numeric RMS, service resource counters and timestamps. They exclude audio recordings, media URLs, song names and browser history. Opt-in captures only SoundDeck's own view hierarchy. There is no network service, analytics or cloud dependency.

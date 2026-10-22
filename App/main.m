@@ -4,41 +4,9 @@
 #import <objc/message.h>
 #import "../Shared/SDProtocol.h"
 #import "SDMasterVolume.h"
+#import "../Shared/SDMixerRow.h"
 @interface UIImage (SDPrivate)
 + (UIImage *)_applicationIconImageForBundleIdentifier:(NSString *)bid format:(int)format scale:(CGFloat)scale;
-@end
-@interface SDRow : UITableViewCell
-@property(strong) UILabel *nameLabel,*statusLabel,*valueLabel;
-@property(strong) UIImageView *appIcon;
-@property(strong) UISlider *slider;
-@property(strong) UIButton *mute;
-@property(copy) NSString *bundleID;
-@property(copy) void (^change)(NSString *,float,BOOL,BOOL);
-@end
-@implementation SDRow
-- (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)identifier {
-    if((self=[super initWithStyle:style reuseIdentifier:identifier])) {
-        self.selectionStyle=UITableViewCellSelectionStyleNone;
-        _appIcon=[UIImageView new]; _appIcon.layer.cornerRadius=12; _appIcon.clipsToBounds=YES;
-        _appIcon.contentMode=UIViewContentModeScaleAspectFit; _appIcon.tintColor=UIColor.systemIndigoColor;
-        _nameLabel=[UILabel new]; _nameLabel.font=[UIFont preferredFontForTextStyle:UIFontTextStyleHeadline]; _nameLabel.adjustsFontForContentSizeCategory=YES;
-        _statusLabel=[UILabel new]; _statusLabel.font=[UIFont preferredFontForTextStyle:UIFontTextStyleCaption1]; _statusLabel.textColor=UIColor.secondaryLabelColor;
-        _statusLabel.adjustsFontForContentSizeCategory=YES; _statusLabel.numberOfLines=2;
-        _valueLabel=[UILabel new]; _valueLabel.font=[UIFontMetrics.defaultMetrics scaledFontForFont:[UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightMedium]]; _valueLabel.adjustsFontForContentSizeCategory=YES;
-        [_valueLabel setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-        _slider=[UISlider new]; _slider.minimumValue=0; _slider.maximumValue=1; _slider.tintColor=UIColor.systemIndigoColor;
-        [_slider addTarget:self action:@selector(slide:) forControlEvents:UIControlEventValueChanged];
-        _mute=[UIButton buttonWithType:UIButtonTypeSystem]; [_mute addTarget:self action:@selector(muteTap) forControlEvents:UIControlEventTouchUpInside];
-        UIStackView *titles=[[UIStackView alloc] initWithArrangedSubviews:@[_nameLabel,_statusLabel]]; titles.axis=UILayoutConstraintAxisVertical; titles.spacing=4;
-        UIStackView *top=[[UIStackView alloc] initWithArrangedSubviews:@[_appIcon,titles,_valueLabel]]; top.spacing=14; top.alignment=UIStackViewAlignmentCenter;
-        UIStackView *bottom=[[UIStackView alloc] initWithArrangedSubviews:@[_slider,_mute]]; bottom.spacing=12; bottom.alignment=UIStackViewAlignmentCenter;
-        UIStackView *all=[[UIStackView alloc] initWithArrangedSubviews:@[top,bottom]]; all.axis=UILayoutConstraintAxisVertical; all.spacing=12; all.translatesAutoresizingMaskIntoConstraints=NO;
-        [self.contentView addSubview:all];
-        [NSLayoutConstraint activateConstraints:@[[all.topAnchor constraintEqualToAnchor:self.contentView.topAnchor constant:18],[all.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor constant:-14],[all.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor constant:20],[all.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor constant:-20],[_appIcon.widthAnchor constraintEqualToConstant:44],[_appIcon.heightAnchor constraintEqualToConstant:44],[_mute.widthAnchor constraintEqualToConstant:48],[_mute.heightAnchor constraintEqualToConstant:44]]];
-    } return self;
-}
-- (void)slide:(UISlider *)s { _valueLabel.text=[NSString stringWithFormat:@"%.0f%%",s.value*100]; if(_change) _change(_bundleID,s.value,NO,NO); }
-- (void)muteTap { if(_change) _change(_bundleID,0,YES,!_mute.selected); }
 @end
 @interface SDController : UITableViewController
 @property(strong) NSDictionary *status;
@@ -69,8 +37,6 @@
 - (void)viewDidLoad {
     [super viewDidLoad]; self.title=@"SoundDeck"; self.navigationController.navigationBar.prefersLargeTitles=YES;
     self.view.tintColor=UIColor.systemIndigoColor;
-    self.navigationItem.rightBarButtonItem=[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addApp)];
-    self.navigationItem.rightBarButtonItem.accessibilityLabel=@"Add application to SoundDeck";
     self.tableView.cellLayoutMarginsFollowReadableWidth=YES; self.tableView.rowHeight=UITableViewAutomaticDimension; self.tableView.estimatedRowHeight=136;
     [self.tableView registerClass:SDRow.class forCellReuseIdentifier:@"app"];
     UIView *header=[[UIView alloc] initWithFrame:CGRectMake(0,0,600,154)];
@@ -102,7 +68,7 @@
             if([command isEqual:@"master"]) {
                 UISlider *slider=s.masterSlider; if(slider.hidden) return;
                 float initial=[SDMasterVolume level]; if(initial<0) return;
-                float requested=initial*.5f;
+                float requested=initial>0.1f?initial*.5f:fminf(1.f,initial+0.15f);
                 slider.value=requested; [slider sendActionsForControlEvents:UIControlEventValueChanged];
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW,1*NSEC_PER_SEC),dispatch_get_main_queue(),^{
                     float changed=AVAudioSession.sharedInstance.outputVolume;
@@ -147,8 +113,7 @@
     if(master>=0 && !_masterSlider.tracking) { _masterSlider.value=master; _masterSlider.accessibilityValue=[NSString stringWithFormat:@"%.0f percent",master*100]; }
     _status=[NSDictionary dictionaryWithContentsOfFile:SD_STATUS] ?: @{};
     BOOL fresh=NSDate.date.timeIntervalSince1970-[_status[@"timestamp"] doubleValue]<4;
-    NSMutableArray *active=[NSMutableArray new]; NSMutableSet *live=[NSMutableSet new];
-    for(NSDictionary *c in fresh?_status[@"clients"]:@[]) if([c[@"active"] boolValue]) { [active addObject:c]; [live addObject:c[@"bundleID"]]; }
+    NSArray *active=SDActiveApplications(_status); NSMutableSet *live=[NSMutableSet setWithArray:[active valueForKey:@"bundleID"]];
     NSMutableArray *saved=[NSMutableArray new];
     for(NSString *bid in [_prefs[@"apps"] allKeys]) if(![live containsObject:bid]) [saved addObject:@{@"bundleID":bid,@"name":_prefs[@"apps"][bid][@"name"] ?: bid}];
     [saved sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES]]];
@@ -157,7 +122,7 @@
     _active=active; _saved=saved;
     NSString *route=AVAudioSession.sharedInstance.currentRoute.outputs.firstObject.portName ?: @"System audio output";
     _routeLabel.text=[NSString stringWithFormat:@"%@ · Master volume",route];
-    _healthLabel.text=!fresh?@"Backend unavailable · Enrolled clients automatically bypass after 5 seconds.":([_prefs[@"disabled"] boolValue]?@"SoundDeck is bypassed · Original audio levels restored":@"Experimental · Only enrolled, compatible playback paths are controlled");
+    _healthLabel.text=!fresh?@"Backend unavailable · Audio automatically bypasses after 5 seconds.":([_prefs[@"disabled"] boolValue]?@"SoundDeck is bypassed · Original audio levels restored":@"Automatic audio discovery · No enrollment required");
     if(changed) [self.tableView reloadData];
     else for(NSIndexPath *index in self.tableView.indexPathsForVisibleRows) if(index.section<2) {
         SDRow *cell=[self.tableView cellForRowAtIndexPath:index]; if([cell isKindOfClass:SDRow.class] && !cell.slider.tracking) [self configure:cell index:index];
@@ -192,7 +157,9 @@
     NSDictionary *a=_prefs[@"apps"][bid] ?: @{};
     row.bundleID=bid; row.nameLabel.text=c[@"name"] ?: bid;
     BOOL active=[c[@"active"] boolValue];
-    row.statusLabel.text=active?[NSString stringWithFormat:@"Playing · %@%@",c[@"path"],[c[@"metered"] boolValue]?@" · PCM measured":@" · Not signal-verified"]:@"Saved · Restart after enrolling · Compatibility not verified";
+    row.statusLabel.text=active?[NSString stringWithFormat:@"Playing · %@%@",c[@"path"],[c[@"metered"] boolValue]?@" · PCM measured":@" · Native volume"]:@"Saved · Applied automatically when this app plays";
+    row.slider.enabled=row.mute.enabled=!active || [c[@"controllable"] boolValue];
+    if(active && ![c[@"controllable"] boolValue]) row.statusLabel.text=@"Audio detected · This path is bypassed for safety";
     row.slider.value=a[@"gain"]?[a[@"gain"] floatValue]:1;
     row.slider.accessibilityLabel=[NSString stringWithFormat:@"%@ volume",row.nameLabel.text];
     row.slider.accessibilityValue=[NSString stringWithFormat:@"%.0f percent",row.slider.value*100];
@@ -224,8 +191,8 @@
 - (NSString *)tableView:(UITableView *)table titleForHeaderInSection:(NSInteger)section { return @[@"Active Audio",@"Saved Applications",@"Settings & Diagnostics"][section]; }
 - (NSString *)tableView:(UITableView *)table titleForFooterInSection:(NSInteger)section {
     if(section==0) return @"Activity comes from actual render callbacks or player state. PCM measurements are not microphone recordings.";
-    if(section==1) return @"Use + to enroll an app, then restart that app. Enrollment does not guarantee compatibility. Recording and call audio are excluded.";
-    return @"SoundDeck 0.1 · Experimental\nDucking is not implemented. Bluetooth, AirPlay, DRM and third-party app compatibility need device validation.";
+    if(section==1) return @"Apps appear automatically as they play. An app already running during installation may need one relaunch. Recording and call audio are excluded.";
+    return @"SoundDeck 0.2 · Experimental\nAudioUnit, AudioQueue, AVAudioEngine, AVPlayer, AVAudioPlayer and sample-buffer adapters. Protected and unattributed audio may bypass control.";
 }
 - (UITableViewCell *)tableView:(UITableView *)table cellForRowAtIndexPath:(NSIndexPath *)index {
     NSArray *items=index.section==0?_active:_saved;
@@ -234,7 +201,7 @@
     cell.textLabel.font=[UIFont preferredFontForTextStyle:UIFontTextStyleBody]; cell.detailTextLabel.numberOfLines=0;
     if(index.section<2) {
         cell.textLabel.text=index.section==0?@"No compatible audio is playing":@"Your mix, remembered";
-        cell.detailTextLabel.text=index.section==0?@"Start an enrolled app or a SoundDeck test signal.":@"Enroll an application to keep its volume between launches.";
+        cell.detailTextLabel.text=index.section==0?@"Start audio in an app. Playing apps are discovered automatically.":@"App volumes are remembered automatically when you adjust them.";
         cell.imageView.image=[UIImage systemImageNamed:index.section==0?@"waveform":@"slider.horizontal.3"];
         cell.selectionStyle=UITableViewCellSelectionStyleNone; return cell;
     }
@@ -257,37 +224,15 @@
         for(NSInteger i=0;i<3;i++) [a addAction:[UIAlertAction actionWithTitle:names[i] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){ self.view.window.overrideUserInterfaceStyle=i; self.prefs[@"appearance"]=@(i); [self save]; }]];
         [a addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]]; [self presentViewController:a animated:YES completion:nil];
     } else if(index.row==3) {
-        [self alert:@"Compatibility & diagnostics" text:[NSString stringWithFormat:@"Backend: %@\nLast update: %@\nClients: %lu\n\nVerified path: direct RemoteIO PCM (Float32). AVPlayer uses per-object gain; real-world compatibility is unverified. AudioQueue, AVAudioEngine graphs, WebKit subprocesses, protected media, calls and recording are not supported. Mixed-framework apps may bypass control. No universal support is claimed.\n\nDiagnostics contain bundle IDs, gain and numeric PCM RMS only. No recordings or content metadata.",_status[@"version"] ?: @"unavailable",_status[@"timestamp"] ?: @"none",(unsigned long)[_status[@"clients"] count]]];
+        [self alert:@"Compatibility & diagnostics" text:[NSString stringWithFormat:@"Backend: %@\nLast update: %@\nClients: %lu\n\nAutomatic adapters: AudioUnit PCM, AudioQueue, AVAudioEngine, AVPlayer, AVAudioPlayer and AVSampleBufferAudioRenderer. Compressed media uses native framework volume controls. Web audio is attributed using unique kernel coalitions, never the foreground app. Unresolved owners and recording/calls bypass gain.\n\nControl Center: expand SoundDeck to adjust all active apps. No app enrollment is needed. Protected/system-routed audio is not universally controllable.\n\nDiagnostics contain app identities and numeric audio state, not recordings or media URLs.",_status[@"version"] ?: @"unavailable",_status[@"timestamp"] ?: @"none",(unsigned long)[_status[@"clients"] count]]];
     } else if(index.row==4) {
-        UIAlertController *a=[UIAlertController alertControllerWithTitle:@"Reset all volumes?" message:@"Saved gains and mute states return to defaults. Enrolled apps stay enrolled." preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertController *a=[UIAlertController alertControllerWithTitle:@"Reset all volumes?" message:@"Saved gains and mute states return to defaults. Automatic audio discovery stays enabled." preferredStyle:UIAlertControllerStyleAlert];
         [a addAction:[UIAlertAction actionWithTitle:@"Reset" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
             NSMutableDictionary *apps=[self.prefs[@"apps"] mutableCopy];
             for(NSString *bid in apps.allKeys) { NSMutableDictionary *entry=[apps[bid] mutableCopy]; entry[@"gain"]=@1; entry[@"muted"]=@NO; apps[bid]=entry; }
             self.prefs[@"apps"]=apps ?: @{}; [self save]; [self.tableView reloadData];
         }]]; [a addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]]; [self presentViewController:a animated:YES completion:nil];
     } else if(index.row==5) [self alert:@"Emergency recovery" text:@"In NewTerm, run:\nsdctl disable\n\nIf the service is unavailable, rename SoundDeck.plist in /var/jb/Library/MobileSubstrate/DynamicLibraries, then restart only affected apps.\n\nUninstall:\nsudo apt remove com.alsinas.sounddeck\n\nNo SpringBoard or audio-daemon injection is used."];
-}
-- (void)addApp {
-    Class workspace=NSClassFromString(@"LSApplicationWorkspace");
-    id ws=((id(*)(id,SEL))objc_msgSend)(workspace,NSSelectorFromString(@"defaultWorkspace"));
-    NSArray *proxies=((id(*)(id,SEL))objc_msgSend)(ws,NSSelectorFromString(@"allApplications"));
-    NSMutableArray *entries=[NSMutableArray new];
-    for(id proxy in proxies) {
-        NSString *bid=[proxy valueForKey:@"applicationIdentifier"],*name=[proxy valueForKey:@"localizedName"];
-        NSString *type=[proxy valueForKey:@"applicationType"];
-        if(!bid || [bid isEqual:@"com.alsinas.sounddeck"] || [bid isEqual:@"com.apple.springboard"]) continue;
-        if([type isEqual:@"User"] || [@[@"com.apple.Music",@"com.apple.mobilesafari",@"com.alsinas.sounddeck.toneA",@"com.alsinas.sounddeck.toneB"] containsObject:bid]) [entries addObject:@{@"bid":bid,@"name":name ?: bid}];
-    }
-    [entries sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES]]];
-    UIAlertController *a=[UIAlertController alertControllerWithTitle:@"Enroll Application" message:@"Experimental. Restart the chosen app after enrolling. Do not enroll communication, banking, or safety-critical apps." preferredStyle:UIAlertControllerStyleActionSheet];
-    for(NSDictionary *entry in entries) [a addAction:[UIAlertAction actionWithTitle:entry[@"name"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
-        NSMutableDictionary *apps=[self.prefs[@"apps"] mutableCopy] ?: [NSMutableDictionary new];
-        NSMutableDictionary *p=[apps[entry[@"bid"]] mutableCopy] ?: [NSMutableDictionary new];
-        p[@"name"]=entry[@"name"]; p[@"enrolled"]=@YES; apps[entry[@"bid"]]=p; self.prefs[@"apps"]=apps;
-        [self save]; [self refresh]; [self alert:@"Application enrolled" text:@"Restart this application to load SoundDeck. Gain control works only if it uses a supported audio path."];
-    }]];
-    [a addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
-    a.popoverPresentationController.barButtonItem=self.navigationItem.rightBarButtonItem; [self presentViewController:a animated:YES completion:nil];
 }
 @end
 @interface SDDelegate:UIResponder<UIApplicationDelegate>

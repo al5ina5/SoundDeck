@@ -3,7 +3,7 @@
 import json,pathlib,subprocess,time,math
 from device_utils import launch_tone_ready
 ROOT=pathlib.Path(__file__).resolve().parent.parent
-DEVICE=str(ROOT/'build/sd-device'); DEB=str(ROOT/'packages/com.alsinas.sounddeck_0.1.0_iphoneos-arm64.deb')
+DEVICE=str(ROOT/'build/sd-device'); DEB=str(ROOT/'packages/com.alsinas.sounddeck_0.2.0_iphoneos-arm64.deb')
 A='com.alsinas.sounddeck.toneA'; B='com.alsinas.sounddeck.toneB'; results=[]
 SERVICE='/var/jb/Library/LaunchDaemons/com.alsinas.sounddeck.plist'
 def cmd(*args,check=True): return subprocess.run(args,check=check,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
@@ -25,7 +25,7 @@ try:
     assert pathlib.Path(DEB).exists(),'build normal release package first'
     restart()
     for bid in (A,B): assert state('com.alsinas.sounddeck.session.'+bid)&1,'mix option missing'
-    cmd('sudo','-n','launchctl','bootout','system/com.alsinas.sounddeck'); time.sleep(8)
+    cmd('sudo','-n','launchctl','bootout','system/com.alsinas.sounddeck',check=False); cmd('sudo','-n','launchctl','bootout','user/501/com.alsinas.sounddeck',check=False); time.sleep(8)
     observed=unity(B)
     results.append({'test':'service-loss watchdog restores PCM unity','pass':True,'rms':observed})
     cmd('sudo','-n','launchctl','bootstrap','system',SERVICE); time.sleep(2); restart()
