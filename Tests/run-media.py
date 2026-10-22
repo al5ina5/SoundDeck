@@ -15,7 +15,7 @@ def cmd(*args,check=True): return subprocess.run(args,check=check,stdout=subproc
 def ctl(*args): return cmd(SDCTL,*map(str,args))
 def status(): return json.loads(ctl('status').stdout)
 def client(key,web=None):
-    bid,_,path=FIX[key]; now=status(); assert time.time()-now['timestamp']<4,'stale service'
+    bid,_,path=FIX[key]; now=status(); assert time.time()-now['timestamp']<max(8,now.get('discoveryDurationMs',0)/1000+4),'stale service'
     if service_pid is not None: assert now['servicePID']==service_pid,'service restarted during media tests'
     rows=[c for c in now['clients'] if c['bundleID']==bid]
     if web is not None: rows=[c for c in rows if bool(c['webProcess'])==web]

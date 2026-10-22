@@ -8,9 +8,9 @@
       "pass": true,
       "bundleID": "com.alsinas.sounddeck.media.web",
       "path": "AudioUnit PCM",
-      "inputRMS": 0.057862211032272834,
-      "outputRMS": 0.020248722056916153,
-      "ratio": 0.349947
+      "inputRMS": 0.05505455100328069,
+      "outputRMS": 0.019256885633630885,
+      "ratio": 0.349778
     },
     {
       "test": "media media element AVPlayer 35%",
@@ -24,5 +24,6 @@
       "test": "WebKit owner stays attributed to the host app",
       "pass": true
     }
-  ]
+  ],
+  "soundDeckVersion": "0.2.1"
 }

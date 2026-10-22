@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os, plistlib, sys
 root=sys.argv[1]
-VERSION='0.2.0'
+VERSION='0.2.1'
 def write(path,obj):
     os.makedirs(os.path.dirname(path),exist_ok=True)
     with open(path,'wb') as f: plistlib.dump(obj,f)

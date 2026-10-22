@@ -12,8 +12,8 @@ No remote compiler, Apple signing account/certificate, SDK download or external 
 ```sh
 export SDK=/var/jb/usr/share/SDKs/iPhoneOS.sdk
 bash build.sh
-python3 Tools/validate-package.py packages/com.alsinas.sounddeck_0.2.0_iphoneos-arm64.deb
-sudo dpkg -i packages/com.alsinas.sounddeck_0.2.0_iphoneos-arm64.deb
+python3 Tools/validate-package.py packages/com.alsinas.sounddeck_0.2.1_iphoneos-arm64.deb
+sudo dpkg -i packages/com.alsinas.sounddeck_0.2.1_iphoneos-arm64.deb
 ```
 
 Executables receive local ldid signatures and payload paths are rooted under `/var/jb`; architecture is `iphoneos-arm64`. The normal package does not include scripted UI controls or fixture apps. Build normal after QA before release.
@@ -25,15 +25,15 @@ The local ElleKit substrate alias advertises a rootful path; the build normalize
 ```sh
 bash build.sh --tests
 python3 Tests/run-unit.py
-sudo dpkg -i packages/com.alsinas.sounddeck_0.2.0_qa_iphoneos-arm64.deb \
-  packages/com.alsinas.sounddeck.tests_0.2.0_iphoneos-arm64.deb
+sudo dpkg -i packages/com.alsinas.sounddeck_0.2.1_qa_iphoneos-arm64.deb \
+  packages/com.alsinas.sounddeck.tests_0.2.1_iphoneos-arm64.deb
 python3 Tests/run-device.py
 python3 Tests/run-media.py
 python3 Tests/run-web.py
 python3 Tests/run-ui.py
 ```
 
-Run device suites serially; they launch/kill fixtures and modify only SoundDeck fixture gains/mutes, mixing/bypass settings and master media volume (which is restored). `--tests` enables compile-time-only scripted hooks and adds the separate optional fixture package. Fixtures play low-level generated test signals only when explicitly launched. UI scripts send real UIKit/Control Center control actions, not physical touches. The portrait request may be rejected by the current windowing mode and is recorded rather than bypassed by changing system settings.
+Run device suites serially; they launch/kill fixtures and modify only SoundDeck fixture gains/mutes, mixing/bypass settings and master media volume (which is restored). `--tests` enables compile-time-only scripted hooks and adds the separate optional fixture package. Fixtures play low-level generated test signals only when explicitly launched. UI scripts send real UIKit/Control Center control actions, not physical touches. The UI suite changes and restores system master volume by default; set `SD_SKIP_MASTER_TEST=1` when user playback may be active. The portrait request may be rejected by the current windowing mode and is recorded rather than bypassed by changing system settings.
 
 ## Lifecycle suite
 

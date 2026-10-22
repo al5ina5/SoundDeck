@@ -3,7 +3,7 @@
 import json,pathlib,subprocess,time,math
 from device_utils import launch_tone_ready
 ROOT=pathlib.Path(__file__).resolve().parent.parent
-DEVICE=str(ROOT/'build/sd-device'); DEB=str(ROOT/'packages/com.alsinas.sounddeck_0.2.0_iphoneos-arm64.deb')
+DEVICE=str(ROOT/'build/sd-device'); DEB=str(ROOT/'packages/com.alsinas.sounddeck_0.2.1_iphoneos-arm64.deb')
 A='com.alsinas.sounddeck.toneA'; B='com.alsinas.sounddeck.toneB'; results=[]
 SERVICE='/var/jb/Library/LaunchDaemons/com.alsinas.sounddeck.plist'
 def cmd(*args,check=True): return subprocess.run(args,check=check,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)

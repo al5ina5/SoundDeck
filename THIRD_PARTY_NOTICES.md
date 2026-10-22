@@ -6,6 +6,7 @@ SoundDeck is a new implementation, not a renamed VolumeMixer fork. The following
 - [Theos documentation](https://theos.dev/docs/), including [iOS installation](https://theos.dev/docs/installation-ios) and [rootless packaging](https://theos.dev/docs/rootless). The build uses the already-installed native compiler and SDK directly; no Theos source or SDK is redistributed.
 - [ElleKit](https://github.com/ellekit/ellekit), supplied by the jailbreak, provides the runtime `MSHookFunction` / `MSHookMessageEx` compatibility interface. It is a package dependency, not vendored code.
 - UIKit, AVFoundation, AudioToolbox, MediaPlayer and Celestial are device-provided Apple frameworks. SF Symbols are used through the operating system. No Apple framework binaries, SDKs or symbol artwork are redistributed as source assets.
+- `Tests/assets/03may2020-tobefree.mp3` is a separate QA-only stock recording by Tobias “ToBeFree” Frei, [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:03may2020-tobefree.mp3), licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). It is not part of either Debian package; see `Tests/assets/README.md` for attribution.
 
 ## VolumeMixer license
 

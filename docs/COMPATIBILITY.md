@@ -1,4 +1,4 @@
-# Compatibility matrix — 0.2.0 experimental
+# Compatibility matrix — 0.2.1 experimental
 
 All device measurements below were made on **iPad7,5 / A10 arm64 / iPadOS 17.7.8 (21H440) / rootless palera1n / ElleKit 1.2** with SoundDeck's separate QA fixtures. They establish that an adapter changed its real PCM buffer or native per-object volume parameter; they do not establish human-perceived loudness, arbitrary app compatibility, or route-wide output behavior.
 
@@ -12,14 +12,16 @@ All device measurements below were made on **iPad7,5 / A10 arm64 / iPadOS 17.7.8
 | AVAudioEngine | **PCM-verified on fixture**: output/input RMS ratio 0.6; separate post-render observer agreed within measurement tolerance. Not every engine graph/output provider is covered. |
 | WebKit Web Audio | **Fixture verified**: GPU subprocess coalition attribution resolved to the host app; PCM ratio 0.349947 at 35%, mute produced zero output. |
 | WebKit HTML media | **Fixture verified**: GPU subprocess attributed to host app; AVPlayer volume was 0.35 at 35%, mute set it to zero. |
-| Simultaneous playback | Five non-WebKit fixture adapters ran at distinct gains in separate processes. The pair of RemoteIO signal fixtures also ran concurrently/backgrounded. |
-| Safari, YouTube, Spotify, commercial browsers | **Not tested**. The WebKit fixture does not certify Safari or every WebKit subprocess/audio route. YouTube and Spotify were not installed. |
-| Protected streaming / DRM / personal Music library | **Not tested**; no personal media used. |
+| Simultaneous playback | Five fixture adapters ran at distinct gains in separate processes; both RemoteIO signals also mixed/backgrounded. **Music + Safari live overlap did not pass:** starting Safari removed Music from the active rows. A trial category-mix override did not fix this and was reverted. |
+| Safari | **Live AVPlayer control verified** with the supplied stock MP3: WebKit player attributed to Safari, 80% → 40% reported native volume, restored to 80%. Starting it could interrupt Music. Not a general Safari guarantee. |
+| Apple Music | **Live AVPlayer gain verified** on a non-personal Apple Music station: 50.9% → 20% reported native volume, restored. It still stopped when Safari started; protected/DRM output is unverified. |
+| YouTube, Spotify, other browsers | **Not tested**. The WebKit fixture does not certify every browser/process/audio route. YouTube and Spotify were not installed. |
+| Protected streaming / DRM | **Not tested**; no protected stream tested. |
 | Arbitrary third-party apps / apps with hybrid pipelines | **Not guaranteed**. An app may use unsupported paths, multiple renderers, remote audio or stop playback on its own. No manual enrollment can make such a path supported. |
 | Recording, calls, PlayAndRecord, MultiRoute, VoiceProcessingIO | **Intentionally excluded** to avoid altering capture/call paths. |
 | Master media volume | Native `AVSystemController` setter/getter exercised and restored; system-volume observations are quantized/cached. Route selection remains native. |
 | Headphones, Bluetooth, AirPlay, route transitions, incoming calls/Siri | Native system routing/interruption behavior is retained, but physical transition/recovery tests remain **unverified**. |
-| Dashboard and Control Center | Light/dark landscape captures and scripted UIKit/Control Center control actions passed. Physical touch, VoiceOver and full Dynamic Type review remain **pending**. |
+| Dashboard and Control Center | Minimal active-app icon/slider rows, zero-slider mute, light/dark layout and scripted Control Center actions passed. Physical touch, VoiceOver and full Dynamic Type review remain **pending**. |
 | Portrait, Split View, Slide Over | Adaptive scene/layout code exists; portrait automation was blocked by iPadOS windowing policy. Multitasking layouts are **not interactively tested**. |
 | Ducking | **Not implemented**. |
 

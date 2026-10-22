@@ -1,0 +1,3 @@
+# Audio test asset
+
+`03may2020-tobefree.mp3` is the 45-second piano recording **“03 May 2020”** by Tobias “ToBeFree” Frei. Source: [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:03may2020-tobefree.mp3). It is licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Credit the author and retain the same license for adaptations. This track is test media only; the build does not install it into the Music library or either package. The Safari test page streams the same public file; playing the local MP3 from Apple Music requires importing/syncing it into that library.

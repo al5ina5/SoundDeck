@@ -1,11 +1,11 @@
 #import <UIKit/UIKit.h>
+#import <MediaPlayer/MediaPlayer.h>
 #import <AVFoundation/AVFoundation.h>
 #import <objc/message.h>
 #import "../Shared/SDProtocol.h"
 #import "../Shared/SDMixerRow.h"
 #import "../App/SDMasterVolume.h"
 
-// Public runtime protocol names; no private framework binary or copied headers are bundled.
 @protocol CCUIContentModuleContentViewController <NSObject>
 @property(nonatomic,readonly) CGFloat preferredExpandedContentHeight;
 @property(nonatomic,readonly) CGFloat preferredExpandedContentWidth;
@@ -19,9 +19,10 @@
 @interface SDCCViewController:UIViewController<CCUIContentModuleContentViewController,UITableViewDataSource,UITableViewDelegate>
 @property(strong) id context;
 @property(strong) UIView *compact;
-@property(strong) UIStackView *panel;
-@property(strong) UILabel *summary,*route;
+@property(strong) UIStackView *panel,*masterLine;
+@property(strong) UIImageView *masterIcon;
 @property(strong) UISlider *master;
+@property(strong) MPVolumeView *masterFallback;
 @property(strong) UITableView *table;
 @property(strong) NSTimer *timer,*saveTimer;
 @property(strong) NSArray *apps;
@@ -31,29 +32,45 @@
 @end
 @implementation SDCCViewController
 - (instancetype)init { if((self=[super init])) { _apps=@[]; _edits=[NSMutableDictionary new]; } return self; }
-- (CGFloat)preferredExpandedContentHeight { return MIN(560,MAX(300,180+_apps.count*135)); }
-- (CGFloat)preferredExpandedContentWidth { return MAX(280,MIN(400,UIScreen.mainScreen.bounds.size.width-64)); }
+- (CGFloat)preferredExpandedContentHeight { return MIN(560,MAX(72,68+_apps.count*64)); }
+- (CGFloat)preferredExpandedContentWidth { return MAX(280,MIN(360,UIScreen.mainScreen.bounds.size.width-64)); }
 - (BOOL)providesOwnPlatter { return NO; }
-- (BOOL)shouldBeginTransitionToExpandedContentModule { return YES; }
-- (BOOL)shouldFinishTransitionToExpandedContentModule { return YES; }
+- (BOOL)shouldBeginTransitionToExpandedContentMode { return YES; }
+- (BOOL)shouldFinishTransitionToExpandedContentMode { return YES; }
 - (BOOL)canDismissPresentedContent { return YES; }
 - (void)viewDidLoad {
     [super viewDidLoad]; self.view.backgroundColor=UIColor.clearColor;
     _compact=[UIView new]; _compact.translatesAutoresizingMaskIntoConstraints=NO; [self.view addSubview:_compact];
-    UIImageView *icon=[[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"slider.horizontal.3"]]; icon.tintColor=UIColor.labelColor; icon.contentMode=UIViewContentModeScaleAspectFit;
-    UILabel *label=[UILabel new]; label.text=@"SoundDeck"; label.textColor=UIColor.labelColor; label.font=[UIFont systemFontOfSize:13 weight:UIFontWeightSemibold]; label.textAlignment=NSTextAlignmentCenter;
-    UIStackView *tile=[[UIStackView alloc] initWithArrangedSubviews:@[icon,label]]; tile.axis=UILayoutConstraintAxisVertical; tile.spacing=5; tile.translatesAutoresizingMaskIntoConstraints=NO; [_compact addSubview:tile];
+    UIImageView *tileIcon=[[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"slider.horizontal.3"]];
+    tileIcon.tintColor=UIColor.whiteColor; tileIcon.contentMode=UIViewContentModeScaleAspectFit;
+    tileIcon.translatesAutoresizingMaskIntoConstraints=NO; [_compact addSubview:tileIcon];
     [_compact addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(expand)]];
-    _compact.isAccessibilityElement=YES; _compact.accessibilityLabel=@"SoundDeck audio mixer"; _compact.accessibilityHint=@"Expand to adjust each playing app"; _compact.accessibilityTraits=UIAccessibilityTraitButton;
-    UILabel *title=[UILabel new]; title.text=@"SoundDeck"; title.font=[UIFont preferredFontForTextStyle:UIFontTextStyleTitle2]; title.adjustsFontForContentSizeCategory=YES;
-    UIButton *done=[UIButton buttonWithType:UIButtonTypeSystem]; [done setImage:[UIImage systemImageNamed:@"xmark.circle.fill"] forState:UIControlStateNormal]; done.tintColor=UIColor.secondaryLabelColor; done.accessibilityLabel=@"Collapse SoundDeck mixer"; [done addTarget:self action:@selector(collapse) forControlEvents:UIControlEventTouchUpInside];
-    UIStackView *top=[[UIStackView alloc] initWithArrangedSubviews:@[title,done]]; top.alignment=UIStackViewAlignmentCenter;
-    _route=[UILabel new]; _route.font=[UIFont preferredFontForTextStyle:UIFontTextStyleCaption1]; _route.textColor=UIColor.secondaryLabelColor; _route.numberOfLines=2;
-    _master=[UISlider new]; _master.tintColor=UIColor.systemIndigoColor; _master.accessibilityLabel=@"System media master volume"; [_master addTarget:self action:@selector(masterChanged:) forControlEvents:UIControlEventValueChanged];
-    _summary=[UILabel new]; _summary.font=[UIFont preferredFontForTextStyle:UIFontTextStyleCaption1]; _summary.textColor=UIColor.secondaryLabelColor; _summary.numberOfLines=2;
-    _table=[[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStylePlain]; _table.dataSource=self; _table.delegate=self; _table.backgroundColor=UIColor.clearColor; _table.separatorColor=UIColor.separatorColor; _table.rowHeight=UITableViewAutomaticDimension; _table.estimatedRowHeight=128; [_table registerClass:SDRow.class forCellReuseIdentifier:@"app"];
-    _panel=[[UIStackView alloc] initWithArrangedSubviews:@[top,_route,_master,_summary,_table]]; _panel.axis=UILayoutConstraintAxisVertical; _panel.spacing=8; _panel.translatesAutoresizingMaskIntoConstraints=NO; [self.view addSubview:_panel];
-    [NSLayoutConstraint activateConstraints:@[[tile.centerXAnchor constraintEqualToAnchor:_compact.centerXAnchor],[tile.centerYAnchor constraintEqualToAnchor:_compact.centerYAnchor],[icon.heightAnchor constraintEqualToConstant:25],[tile.widthAnchor constraintLessThanOrEqualToAnchor:_compact.widthAnchor constant:-8],[_compact.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],[_compact.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],[_compact.topAnchor constraintEqualToAnchor:self.view.topAnchor],[_compact.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],[_panel.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:16],[_panel.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-16],[_panel.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:14],[_panel.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:-12],[done.widthAnchor constraintEqualToConstant:44],[done.heightAnchor constraintEqualToConstant:44],[_master.heightAnchor constraintEqualToConstant:32]]];
+    _compact.isAccessibilityElement=YES; _compact.accessibilityLabel=@"SoundDeck mixer"; _compact.accessibilityHint=@"Expand to adjust playing apps"; _compact.accessibilityTraits=UIAccessibilityTraitButton;
+
+    _masterIcon=[[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"speaker.wave.2.fill"]];
+    _masterIcon.contentMode=UIViewContentModeScaleAspectFit; _masterIcon.tintColor=UIColor.whiteColor;
+    _masterIcon.accessibilityLabel=@"System media volume"; _masterIcon.isAccessibilityElement=YES;
+    _master=[UISlider new]; _master.minimumValue=0; _master.maximumValue=1; _master.tintColor=UIColor.systemIndigoColor;
+    _master.accessibilityLabel=@"System media volume"; [_master addTarget:self action:@selector(masterChanged:) forControlEvents:UIControlEventValueChanged];
+    _masterFallback=[[MPVolumeView alloc] initWithFrame:CGRectZero]; _masterFallback.showsRouteButton=NO; _masterFallback.tintColor=UIColor.systemIndigoColor;
+    BOOL direct=[SDMasterVolume available]; _master.hidden=!direct; _masterFallback.hidden=direct; _masterFallback.showsVolumeSlider=!direct;
+    _masterLine=[[UIStackView alloc] initWithArrangedSubviews:@[_masterIcon,_master,_masterFallback]];
+    _masterLine.axis=UILayoutConstraintAxisHorizontal; _masterLine.alignment=UIStackViewAlignmentCenter; _masterLine.spacing=12;
+
+    _table=[[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStylePlain]; _table.dataSource=self; _table.delegate=self;
+    _table.backgroundColor=UIColor.clearColor; _table.separatorColor=UIColor.separatorColor; _table.rowHeight=60; _table.estimatedRowHeight=60;
+    [_table registerClass:SDRow.class forCellReuseIdentifier:@"app"];
+    _panel=[[UIStackView alloc] initWithArrangedSubviews:@[_masterLine,_table]]; _panel.axis=UILayoutConstraintAxisVertical;
+    _panel.spacing=2; _panel.translatesAutoresizingMaskIntoConstraints=NO; [self.view addSubview:_panel];
+    [NSLayoutConstraint activateConstraints:@[
+        [tileIcon.centerXAnchor constraintEqualToAnchor:_compact.centerXAnchor],[tileIcon.centerYAnchor constraintEqualToAnchor:_compact.centerYAnchor],
+        [tileIcon.widthAnchor constraintEqualToConstant:27],[tileIcon.heightAnchor constraintEqualToConstant:27],
+        [_compact.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],[_compact.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [_compact.topAnchor constraintEqualToAnchor:self.view.topAnchor],[_compact.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
+        [_panel.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:12],[_panel.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-12],
+        [_panel.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:6],[_panel.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:-6],
+        [_masterIcon.widthAnchor constraintEqualToConstant:32],[_masterIcon.heightAnchor constraintEqualToConstant:32],[_masterLine.heightAnchor constraintEqualToConstant:52],
+        [_masterFallback.heightAnchor constraintEqualToConstant:32]]];
     _panel.hidden=!_expanded; _compact.hidden=_expanded; [self refresh];
     __weak typeof(self) weak=self;
     for(NSString *verb in @[@"expand",@"capture",@"dismiss"]) {
@@ -66,7 +83,7 @@
     }
 #ifdef SD_TESTING
     int testToken; notify_register_dispatch("com.alsinas.sounddeck.cc.test-sliders",&testToken,dispatch_get_main_queue(),^(int token){
-        NSMutableArray<SDRow *> *rows=[NSMutableArray new]; for(UITableViewCell *cell in weak.table.visibleCells) if([cell isKindOfClass:SDRow.class]) [rows addObject:(SDRow *)cell];
+        NSMutableArray<SDRow *> *rows=[NSMutableArray new]; for(UITableViewCell *cell in weak.table.visibleCells) if([cell isKindOfClass:SDRow.class] && [@[@"com.alsinas.sounddeck.media.ap",@"com.alsinas.sounddeck.media.aq"] containsObject:((SDRow *)cell).bundleID]) [rows addObject:(SDRow *)cell];
         [rows sortUsingComparator:^NSComparisonResult(SDRow *a,SDRow *b){ return [a.bundleID compare:b.bundleID]; }];
         for(NSUInteger i=0;i<MIN((NSUInteger)2,rows.count);i++) { rows[i].slider.value=i?0.8f:0.2f; [rows[i].slider sendActionsForControlEvents:UIControlEventValueChanged]; }
     });
@@ -77,13 +94,6 @@
     });
 #endif
     [self diagnostics];
-}
-- (void)showControlCenter {
-    Class cls=NSClassFromString(@"SBControlCenterController"); SEL shared=NSSelectorFromString(@"sharedInstance");
-    if(![cls respondsToSelector:shared]) return;
-    id c=((id(*)(id,SEL))objc_msgSend)(cls,shared); SEL present=NSSelectorFromString(@"presentAnimated:");
-    if([c respondsToSelector:present]) ((void(*)(id,SEL,BOOL))objc_msgSend)(c,present,YES);
-    else { present=NSSelectorFromString(@"presentAnimated:completion:"); if([c respondsToSelector:present]) ((void(*)(id,SEL,BOOL,id))objc_msgSend)(c,present,YES,nil); }
 }
 - (BOOL)accessibilityActivate { [self expand]; return YES; }
 - (void)expand { SEL s=NSSelectorFromString(@"requestExpandModule"); if([_context respondsToSelector:s]) ((void(*)(id,SEL))objc_msgSend)(_context,s); }
@@ -102,45 +112,44 @@
 - (void)refresh {
     if(!_edits.count) _prefs=SDReadPrefs();
     NSDictionary *status=[NSDictionary dictionaryWithContentsOfFile:SD_STATUS] ?: @{};
-    NSArray *next=SDActiveApplications(status);
-    BOOL tracking=NO; for(UITableViewCell *c in _table.visibleCells) if([c isKindOfClass:SDRow.class] && ((SDRow *)c).slider.tracking) tracking=YES;
-    if(!tracking) { _apps=next; [_table reloadData]; }
-    BOOL fresh=NSDate.date.timeIntervalSince1970-[status[@"timestamp"] doubleValue]<4;
-    if(_expanded && next.count!=_apps.count && [_context respondsToSelector:NSSelectorFromString(@"expandedModuleDidUpdatePreferredSize")])
-        ((void(*)(id,SEL))objc_msgSend)(_context,NSSelectorFromString(@"expandedModuleDidUpdatePreferredSize"));
-    _summary.text=!fresh?@"Backend unavailable · Automatic safety bypass":([_prefs[@"disabled"] boolValue]?@"SoundDeck is bypassed":(_apps.count?[NSString stringWithFormat:@"%lu playing apps · Individual volume",(unsigned long)_apps.count]:@"Playing apps appear automatically"));
-    _route.text=[NSString stringWithFormat:@"%@ · Master volume",AVAudioSession.sharedInstance.currentRoute.outputs.firstObject.portName ?: @"System audio output"];
+    NSArray *next=SDActiveApplications(status); NSArray *old=[_apps valueForKey:@"bundleID"],*fresh=[next valueForKey:@"bundleID"];
+    if(![old isEqual:fresh]) {
+        _apps=next; [_table reloadData];
+        if(_expanded && [_context respondsToSelector:NSSelectorFromString(@"expandedModuleDidUpdatePreferredSize")])
+            ((void(*)(id,SEL))objc_msgSend)(_context,NSSelectorFromString(@"expandedModuleDidUpdatePreferredSize"));
+    }
     if(!_master.tracking) { float v=[SDMasterVolume level]; _master.enabled=v>=0; if(v>=0) _master.value=v; }
 }
 - (void)masterChanged:(UISlider *)slider { [SDMasterVolume setLevel:slider.value]; }
-- (NSInteger)tableView:(UITableView *)table numberOfRowsInSection:(NSInteger)section { return MAX(1,_apps.count); }
+- (NSInteger)tableView:(UITableView *)table numberOfRowsInSection:(NSInteger)section { return _apps.count; }
 - (UITableViewCell *)tableView:(UITableView *)table cellForRowAtIndexPath:(NSIndexPath *)index {
-    if(!_apps.count) { UITableViewCell *cell=[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil]; cell.backgroundColor=UIColor.clearColor; cell.textLabel.text=@"No active audio"; cell.detailTextLabel.text=@"Start playback in any app."; cell.selectionStyle=UITableViewCellSelectionStyleNone; return cell; }
-    SDRow *row=[table dequeueReusableCellWithIdentifier:@"app" forIndexPath:index]; NSDictionary *app=_apps[index.row]; NSString *bid=app[@"bundleID"];
-    NSMutableDictionary *entry=[_prefs[@"apps"][bid] mutableCopy] ?: [NSMutableDictionary new]; if(_edits[bid]) [entry addEntriesFromDictionary:_edits[bid]];
-    row.bundleID=bid; row.nameLabel.text=app[@"name"]; row.statusLabel.text=[app[@"controllable"] boolValue]?app[@"path"]:@"Unattributed or excluded audio · Bypassed";
-    row.backgroundColor=UIColor.clearColor; row.appIcon.image=[UIImage _applicationIconImageForBundleIdentifier:bid format:2 scale:UIScreen.mainScreen.scale] ?: [UIImage systemImageNamed:@"waveform"];
-    row.slider.value=entry[@"gain"]?[entry[@"gain"] floatValue]:1; row.slider.enabled=row.mute.enabled=[app[@"controllable"] boolValue]; row.valueLabel.text=[NSString stringWithFormat:@"%.0f%%",row.slider.value*100];
-    row.slider.accessibilityLabel=[NSString stringWithFormat:@"%@ volume",app[@"name"]]; row.mute.selected=[entry[@"muted"] boolValue]; row.mute.accessibilityLabel=[NSString stringWithFormat:@"%@ %@",row.mute.selected?@"Unmute":@"Mute",app[@"name"]];
-    [row.mute setImage:[UIImage systemImageNamed:row.mute.selected?@"speaker.slash.fill":@"speaker.wave.2.fill"] forState:UIControlStateNormal];
-    __weak typeof(self) weak=self; __weak SDRow *weakRow=row;
+    SDRow *row=[table dequeueReusableCellWithIdentifier:@"app" forIndexPath:index]; NSDictionary *app=_apps[index.row];
+    NSString *bid=app[@"bundleID"],*name=app[@"name"] ?: bid;
+    NSMutableDictionary *entry=[_prefs[@"apps"][bid] mutableCopy] ?: [NSMutableDictionary new];
+    if(_edits[bid]) [entry addEntriesFromDictionary:_edits[bid]];
+    row.bundleID=bid; row.appIcon.image=[UIImage _applicationIconImageForBundleIdentifier:bid format:2 scale:UIScreen.mainScreen.scale] ?: [UIImage systemImageNamed:@"waveform"];
+    row.slider.value=[entry[@"muted"] boolValue]?0:(entry[@"gain"]?[entry[@"gain"] floatValue]:1);
+    row.slider.enabled=[app[@"controllable"] boolValue]; row.slider.accessibilityLabel=[NSString stringWithFormat:@"%@ volume",name];
+    row.slider.accessibilityValue=row.slider.value<=0?@"Muted":[NSString stringWithFormat:@"%.0f percent",row.slider.value*100];
+    __weak typeof(self) weak=self;
     row.change=^(NSString *identifier,float value,BOOL muteChange,BOOL muted){
-        SDCCViewController *self=weak; if(!self) return;
-        NSMutableDictionary *delta=[self.edits[identifier] mutableCopy] ?: [NSMutableDictionary new]; delta[@"name"]=app[@"name"]; delta[muteChange?@"muted":@"gain"]=muteChange?@(muted):@(value); self.edits[identifier]=delta;
-        NSMutableDictionary *live=[self.prefs[@"apps"][identifier] mutableCopy] ?: [NSMutableDictionary new]; [live addEntriesFromDictionary:delta];
-        int token; if(!notify_register_check(SDGainName(identifier).UTF8String,&token)) { notify_set_state(token,SDConfig(self.prefs,live)); notify_post(SDGainName(identifier).UTF8String); notify_cancel(token); }
-        [self.saveTimer invalidate]; self.saveTimer=[NSTimer scheduledTimerWithTimeInterval:.2 repeats:NO block:^(NSTimer *timer){ [weak flush]; }];
-        if(muteChange) { weakRow.mute.selected=muted; [weakRow.mute setImage:[UIImage systemImageNamed:muted?@"speaker.slash.fill":@"speaker.wave.2.fill"] forState:UIControlStateNormal]; }
-    }; return row;
+        SDCCViewController *controller=weak; if(!controller) return;
+        NSMutableDictionary *delta=[controller.edits[identifier] mutableCopy] ?: [NSMutableDictionary new];
+        delta[@"name"]=name; delta[@"gain"]=@(value); delta[@"muted"]=@NO; controller.edits[identifier]=delta;
+        NSMutableDictionary *live=[controller.prefs[@"apps"][identifier] mutableCopy] ?: [NSMutableDictionary new]; [live addEntriesFromDictionary:delta];
+        int token; if(!notify_register_check(SDGainName(identifier).UTF8String,&token)) { notify_set_state(token,SDConfig(controller.prefs,live)); notify_post(SDGainName(identifier).UTF8String); notify_cancel(token); }
+        [controller.saveTimer invalidate]; controller.saveTimer=[NSTimer scheduledTimerWithTimeInterval:.2 repeats:NO block:^(NSTimer *timer){ [weak flush]; }];
+    };
+    return row;
 }
 - (void)flush {
-    [_saveTimer invalidate]; _saveTimer=nil;
-    if(!_edits.count) return;
+    [_saveTimer invalidate]; _saveTimer=nil; if(!_edits.count) return;
     if(SDUpdatePrefs(@{@"apps":[_edits copy]},nil)) { [_edits removeAllObjects]; _prefs=SDReadPrefs(); }
     [self diagnostics];
 }
 - (void)diagnostics {
-    NSMutableArray *rows=[NSMutableArray new]; for(SDRow *row in _table.visibleCells) if([row isKindOfClass:SDRow.class]) [rows addObject:@{@"bundleID":row.bundleID ?: @"",@"gain":@(row.slider.value),@"enabled":@(row.slider.enabled)}];
+    NSMutableArray *rows=[NSMutableArray new];
+    for(SDRow *row in _table.visibleCells) if([row isKindOfClass:SDRow.class]) [rows addObject:@{@"bundleID":row.bundleID ?: @"",@"gain":@(row.slider.value),@"enabled":@(row.slider.enabled)}];
     [@{@"version":SD_VERSION,@"host":NSBundle.mainBundle.bundleIdentifier ?: @"",@"expanded":@(_expanded),@"visible":@(self.view.window!=nil),@"rows":rows,@"contextClass":NSStringFromClass([_context class]) ?: @"",@"parentClass":NSStringFromClass(self.parentViewController.class) ?: @""} writeToFile:SD_DIR @"/cc-diagnostics.plist" atomically:YES];
 }
 - (void)capture {

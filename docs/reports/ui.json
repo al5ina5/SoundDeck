@@ -1,6 +1,7 @@
 {
   "uiActions": "UIKit sendActions, not human touch",
-  "sliderAndMuteToBackend": true,
+  "sliderToBackend": true,
+  "zeroSliderMutes": true,
   "light": {
     "height": 768.0,
     "phase": "captured",
@@ -10,30 +11,16 @@
         "bundleID": "com.alsinas.sounddeck.toneA",
         "gain": 0.20000000298023224,
         "iconPresent": 1,
-        "muteAccessible": 1,
-        "muted": false,
         "sliderAccessible": 1,
-        "touchTargetHeight": 44.0
+        "touchTargetHeight": 64.0
       },
       {
         "ambiguous": false,
         "bundleID": "com.alsinas.sounddeck.toneB",
         "gain": 0.800000011920929,
         "iconPresent": 1,
-        "muteAccessible": 1,
-        "muted": false,
         "sliderAccessible": 1,
-        "touchTargetHeight": 44.0
-      },
-      {
-        "ambiguous": false,
-        "bundleID": "com.alsinas.sounddeck.media.ap",
-        "gain": 1.0,
-        "iconPresent": 1,
-        "muteAccessible": 1,
-        "muted": false,
-        "sliderAccessible": 1,
-        "touchTargetHeight": 44.0
+        "touchTargetHeight": 64.0
       }
     ],
     "state": 0,
@@ -49,30 +36,16 @@
         "bundleID": "com.alsinas.sounddeck.toneA",
         "gain": 0.20000000298023224,
         "iconPresent": 1,
-        "muteAccessible": 1,
-        "muted": false,
         "sliderAccessible": 1,
-        "touchTargetHeight": 44.0
+        "touchTargetHeight": 64.0
       },
       {
         "ambiguous": false,
         "bundleID": "com.alsinas.sounddeck.toneB",
         "gain": 0.800000011920929,
         "iconPresent": 1,
-        "muteAccessible": 1,
-        "muted": false,
         "sliderAccessible": 1,
-        "touchTargetHeight": 44.0
-      },
-      {
-        "ambiguous": false,
-        "bundleID": "com.alsinas.sounddeck.media.ap",
-        "gain": 1.0,
-        "iconPresent": 1,
-        "muteAccessible": 1,
-        "muted": false,
-        "sliderAccessible": 1,
-        "touchTargetHeight": 44.0
+        "touchTargetHeight": 64.0
       }
     ],
     "state": 0,
@@ -88,30 +61,16 @@
         "bundleID": "com.alsinas.sounddeck.toneA",
         "gain": 0.20000000298023224,
         "iconPresent": 1,
-        "muteAccessible": 1,
-        "muted": false,
         "sliderAccessible": 1,
-        "touchTargetHeight": 44.0
+        "touchTargetHeight": 64.0
       },
       {
         "ambiguous": false,
         "bundleID": "com.alsinas.sounddeck.toneB",
         "gain": 0.800000011920929,
         "iconPresent": 1,
-        "muteAccessible": 1,
-        "muted": false,
         "sliderAccessible": 1,
-        "touchTargetHeight": 44.0
-      },
-      {
-        "ambiguous": false,
-        "bundleID": "com.alsinas.sounddeck.media.ap",
-        "gain": 1.0,
-        "iconPresent": 1,
-        "muteAccessible": 1,
-        "muted": false,
-        "sliderAccessible": 1,
-        "touchTargetHeight": 44.0
+        "touchTargetHeight": 64.0
       }
     ],
     "state": 0,
@@ -121,22 +80,13 @@
     "blockedReason": "The current windowing mode does not allow for programmatic changes to interface orientation."
   },
   "masterVolume": {
-    "changed": 0.15000000596046448,
-    "initial": 0.0,
-    "method": "UIKit slider action to AVSystemController; measured with AVAudioSession.outputVolume",
-    "requested": 0.15000000596046448,
-    "restored": 0.15000000596046448,
-    "restoredNative": 0.0
+    "skipped": "Avoid changing active user playback during this run."
   },
   "controlCenter": {
     "expandedRows": 2,
-    "captureBytes": 88140,
+    "captureBytes": 39012,
     "masterTest": {
-      "after": 0.05000000074505806,
-      "before": 0.0,
-      "restored": 0.0,
-      "set": true,
-      "target": 0.05000000074505806
+      "skipped": "Avoid changing active user playback during this run."
     },
     "preferencesPersisted": true,
     "dismissal": {
@@ -144,5 +94,6 @@
       "host": "com.apple.springboard",
       "presentedAfter": false
     }
-  }
+  },
+  "soundDeckVersion": "0.2.1"
 }

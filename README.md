@@ -10,6 +10,8 @@
 <img src="docs/images/landscape-dark.png" width="720" alt="SoundDeck native iPad dashboard in dark appearance">
 </details>
 
+<img src="docs/images/control-center.png" width="480" alt="Minimal SoundDeck Control Center mixer with master and app sliders">
+
 ## Verified on-device
 
 - Per-app live discovery without enrollment; gains persist by bundle ID.
@@ -24,28 +26,28 @@ Test device: **iPad 6th generation / iPad7,5 / A10 arm64 / iPadOS 17.7.8 (21H440
 
 ## Install
 
-Install the normal package `com.alsinas.sounddeck_0.2.0_iphoneos-arm64.deb` from the [experimental release](https://github.com/al5ina5/SoundDeck/releases/tag/v0.2.0-experimental.1) using Sileo/Zebra, or:
+Install the normal package `com.alsinas.sounddeck_0.2.1_iphoneos-arm64.deb` from the [experimental release](https://github.com/repos1tory/SoundDeck/releases/tag/v0.2.1-experimental.1) or the [repos1tory package index](https://repos1tory.github.io/) using Sileo/Zebra, or:
 
 ```sh
-sudo dpkg -i com.alsinas.sounddeck_0.2.0_iphoneos-arm64.deb
+sudo dpkg -i com.alsinas.sounddeck_0.2.1_iphoneos-arm64.deb
 ```
 
 Requires a rootless ElleKit jailbreak, CCSupport, iPadOS 15 or later, and an arm64 device. The package adds SoundDeck to the CCSupport module layout when possible. If it does not appear, restart SpringBoard or add SoundDeck in Control Center settings. `sdctl cc-install` and `sdctl cc-remove` manage only SoundDeck's module entry.
 
-Open SoundDeck or Control Center. Playing apps appear automatically when SoundDeck observes an active supported output; **there is no enrollment step**. Set each app's gain/mute independently. The master slider controls system media volume, not per-app gain. Recording, calls and VoiceProcessingIO paths are excluded. Restart an already-running app after installing/upgrading so it loads the new tweak.
+Open SoundDeck or Control Center. Playing apps appear automatically when SoundDeck observes an active supported output; **there is no enrollment step**. Each row is only an app icon and slider; set a slider to zero to mute. The master row controls system media volume, not per-app gain. Recording, calls and VoiceProcessingIO paths are excluded. Restart an already-running app after installing/upgrading so it loads the new tweak.
 
-The optional `com.alsinas.sounddeck.tests_0.2.0_iphoneos-arm64.deb` contains quiet 440/880 Hz and framework fixtures. Install only for QA; launch them explicitly and stop them after testing. They are not production app rows.
+The optional `com.alsinas.sounddeck.tests_0.2.1_iphoneos-arm64.deb` contains quiet 440/880 Hz and framework fixtures. A freely licensed 45-second stock piano MP3 and minimal Safari test page are in [`Tests/assets`](Tests/assets/README.md); they are not installed by either package. Install fixtures only for QA; launch them explicitly and stop them after testing. They are not production app rows.
 
 ## Build and test locally
 
 Requires a jailbroken arm64 build device with local Clang/Clang++, an iOS SDK, ldid, dpkg-deb, ElleKit and CCSupport. This project was built and signed on the test iPad; the SDK and jailbreak libraries are not included.
 
 ```sh
-git clone https://github.com/al5ina5/SoundDeck.git
+git clone https://github.com/repos1tory/SoundDeck.git
 cd SoundDeck
 export SDK=/var/jb/usr/share/SDKs/iPhoneOS.sdk
 bash build.sh
-python3 Tools/validate-package.py packages/com.alsinas.sounddeck_0.2.0_iphoneos-arm64.deb
+python3 Tools/validate-package.py packages/com.alsinas.sounddeck_0.2.1_iphoneos-arm64.deb
 ```
 
 For QA-only fixtures and scripted hooks:
@@ -53,8 +55,8 @@ For QA-only fixtures and scripted hooks:
 ```sh
 bash build.sh --tests
 python3 Tests/run-unit.py
-sudo dpkg -i packages/com.alsinas.sounddeck_0.2.0_qa_iphoneos-arm64.deb \
-  packages/com.alsinas.sounddeck.tests_0.2.0_iphoneos-arm64.deb
+sudo dpkg -i packages/com.alsinas.sounddeck_0.2.1_qa_iphoneos-arm64.deb \
+  packages/com.alsinas.sounddeck.tests_0.2.1_iphoneos-arm64.deb
 python3 Tests/run-device.py
 python3 Tests/run-media.py
 python3 Tests/run-web.py
@@ -76,4 +78,4 @@ Uninstall removes SoundDeck's Control Center entry, preserves preferences intent
 
 The tweak observes active app audio paths, applies PCM attenuation or framework-native per-object volume, and reports fresh activity to the local service. WebKit subprocesses are separately injected and attributed to their host app through coalition identity when unambiguous. Unknown/ambiguous owners are not offered as controllable app rows. No recording, network service, analytics, cloud dependency, song metadata or media content inspection is used.
 
-SoundDeck does not provide a universal iOS per-process hardware volume API. Apps may use unwrapped graphs, remote rendering, protected output or private pipelines that are not covered by tested adapters. Human listening, headphones/Bluetooth/AirPlay transitions, physical touch/VoiceOver review, portrait layout and multi-hour endurance remain unverified. The release stays explicitly **experimental**. See [architecture](docs/ARCHITECTURE.md), [compatibility](docs/COMPATIBILITY.md), [testing](docs/TESTING.md), [MIT license](LICENSE) and [third-party notices](THIRD_PARTY_NOTICES.md).
+SoundDeck does not provide a universal iOS per-process hardware volume API. Apps may use unwrapped graphs, remote rendering, protected output or private pipelines that are not covered by tested adapters. It also does not suppress app/system interruptions: starting Safari while Music was playing stopped Music in live testing, even with a trial category-mix override. That override was reverted; SoundDeck controls gains, not a PC-style guarantee that every app keeps playing. Human listening, headphones/Bluetooth/AirPlay transitions, physical touch/VoiceOver review, portrait layout and multi-hour endurance remain unverified. The release stays explicitly **experimental**. See [architecture](docs/ARCHITECTURE.md), [compatibility](docs/COMPATIBILITY.md), [testing](docs/TESTING.md), [MIT license](LICENSE) and [third-party notices](THIRD_PARTY_NOTICES.md).

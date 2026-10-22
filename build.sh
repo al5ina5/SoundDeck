@@ -63,7 +63,7 @@ if [[ " ${*} " == *" --tests "* ]]; then
   chmod 755 build/test-stage/DEBIAN/{postinst,prerm}
   find build/test-stage -type d -exec chmod 755 {} +
   find build/test-stage -type f -name '*.png' -exec chmod 644 {} +
-dpkg-deb --root-owner-group -Zgzip -b build/test-stage packages/com.alsinas.sounddeck.tests_0.2.0_iphoneos-arm64.deb
+dpkg-deb --root-owner-group -Zgzip -b build/test-stage packages/com.alsinas.sounddeck.tests_0.2.1_iphoneos-arm64.deb
 fi
 cp Packaging/control Packaging/postinst Packaging/prerm Packaging/postrm build/stage/DEBIAN/
 chmod 755 build/stage build/stage/DEBIAN
@@ -74,5 +74,5 @@ find build/stage/var -type f -name '*.plist' -exec chmod 644 {} +
 find build/stage/var -type f -name '*.png' -exec chmod 644 {} +
 SUFFIX=""
 [[ " ${*} " == *" --tests "* ]] && SUFFIX="_qa"
-dpkg-deb --root-owner-group -Zgzip -b build/stage "packages/com.alsinas.sounddeck_0.2.0${SUFFIX}_iphoneos-arm64.deb"
-dpkg-deb -I "packages/com.alsinas.sounddeck_0.2.0${SUFFIX}_iphoneos-arm64.deb"
+dpkg-deb --root-owner-group -Zgzip -b build/stage "packages/com.alsinas.sounddeck_0.2.1${SUFFIX}_iphoneos-arm64.deb"
+dpkg-deb -I "packages/com.alsinas.sounddeck_0.2.1${SUFFIX}_iphoneos-arm64.deb"

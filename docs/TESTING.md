@@ -1,6 +1,8 @@
-# Real-device validation — experimental 0.2.0
+# Real-device validation — experimental 0.2.1
 
 Tested directly on **iPad7,5 (iPad 6th generation), A10 arm64, iPadOS 17.7.8 (21H440), rootless palera1n / Procursus / ElleKit 1.2**, October 22, 2026. Compilation, signing, packaging, installation and tests were performed on-device.
+
+0.2.1 changes the app/Control Center UI and adds a licensed test asset; the audio runtime is unchanged from the 0.2.0 baseline. Core PCM and lifecycle figures are retained from that baseline; framework, WebKit and minimalist UI suites were rerun with 0.2.1.
 
 Reports: [RemoteIO integration](reports/integration.json) · [framework adapters](reports/media.json) · [WebKit](reports/web.json) · [UI/Control Center](reports/ui.json) · [package lifecycle](reports/lifecycle.json).
 
@@ -28,9 +30,7 @@ The lifecycle suite passed service-loss watchdog recovery, package upgrade prese
 
 ## UI and Control Center
 
-The QA dashboard suite drove real UIKit slider/mute actions and verified backend gains, light/dark landscape layout, icons, accessibility labels, 44pt mute targets, master media-volume set/restore and row constraints. The Control Center suite opened/expanded the real CCSupport module, drove two app sliders, checked live backend changes and saved preferences, exercised the master setter, and captured the module. These are scripted control actions and accessibility metadata checks, not physical touch, animation or VoiceOver testing.
-
-The latest master-volume sample started at native level 0, requested 0.15, observed `AVAudioSession.outputVolume` 0.15, and confirmed the native getter restored to 0. The Control Center setter independently changed 0 to 0.05 and restored the native getter to 0. The dashboard's `AVAudioSession.outputVolume` restore observation remained cached at 0.15; the native getter is used as the restoration check. System output reporting is quantized/cached; raw observations are retained in the report.
+The 0.2.1 UI suite drove real UIKit sliders (including zero-volume mute), checked backend gains, light/dark layout, icons, accessibility labels and compact card sizing. The Control Center suite opened/expanded the real CCSupport module, drove two app sliders, checked live backend changes and saved preferences, captured the module and verified dismissal. The system master-volume setter passed in 0.2.0; it was deliberately not changed during the 0.2.1 pass while user playback might be active. These are scripted control actions, not physical touch, animation or VoiceOver testing.
 
 Portrait automation received the system error:
 
@@ -38,6 +38,19 @@ Portrait automation received the system error:
 
 Portrait is declared and adaptive layout code is present, but portrait remains unverified. Captures are native layer captures of SoundDeck's own view; they omit system chrome/live blur and do not show a physical Control Center screen.
 
+## Live manual test result (PSI-controlled)
+
+The `psi` utility (Psychosis) was used only for screen inspection and synthetic taps; it was not used to record or listen to audio. A non-personal Apple Music station (2010s Hip-Hop Essentials) was started in Music, and the included CC BY-SA piano MP3 was started in Safari.
+
+- **Music gain:** while its AVPlayer was playing, the Music row changed from 50.9% to 20%; the reported native AVPlayer volume changed to 0.20 and returned to 0.509.
+- **Safari gain:** with the stock MP3 playing, the Safari WebKit AVPlayer was attributed to Safari and changed from 80% to 40% (reported native volume 0.40), then restored to 80%.
+- **Overlap limitation:** starting Safari while Music was playing caused Music to leave the active service rows. A trial build that forced `MixWithOthers` through `AVAudioSession` category hooks did not make both continue, so that unproven override was reverted and is not in the released package. This is app/session interruption behavior; SoundDeck does not suppress interruption notifications.
+- The installed RayGame build did not begin audible playback without game interaction, so a three-app overlap was not established.
+
+This establishes **independent gain control of Safari and Music when each is playing**, but **does not establish simultaneous Music + Safari playback** on this device/build. No PC-style forced-audio claim is made.
+
+The included CC BY-SA 4.0 piano MP3 and Safari page remain in `Tests/assets/` for repeatable manual testing. A user can play the file directly in Safari; importing the MP3 into Apple Music requires a separate library import/sync.
+
 ## Not verified
 
-No human listening or acoustic measurement; Safari/YouTube/Spotify/commercial browser or DRM tests; personal Music-library playback; every third-party app/audio graph; headphones/Bluetooth/AirPlay/headset route transitions; incoming-call/Siri recovery; physical touch or VoiceOver review; full Dynamic Type range; Split View/Slide Over; portrait; or multi-hour endurance. The release is still **experimental**. See [compatibility](COMPATIBILITY.md).
+No human listening or acoustic measurement yet; Safari gain A/B with the listener and an active Apple Music test-track transition are pending. YouTube/Spotify/DRM, every third-party app/audio graph, headphones/Bluetooth/AirPlay/headset transitions, incoming-call/Siri recovery, physical touch/VoiceOver, full Dynamic Type, Split View/Slide Over, portrait and multi-hour endurance also remain unverified. The release is still **experimental**. See [compatibility](COMPATIBILITY.md).

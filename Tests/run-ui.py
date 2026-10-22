@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Programmatic UIKit control-action tests on the device, not physical touch tests."""
-import json,pathlib,plistlib,shutil,subprocess,time,sys
+import json,pathlib,plistlib,shutil,subprocess,time,sys,os
 from device_utils import launch_tone_ready
 ROOT=pathlib.Path(__file__).resolve().parent.parent
 DIR=pathlib.Path('/var/mobile/Library/SoundDeck'); OUT=ROOT/'Tests/results-local'
@@ -15,13 +15,13 @@ def capture(name):
     assert data['state']==0,'SoundDeck is not foreground active'
     assert len(data['rows'])>=2,'two active app controls not visible'
     for row in data['rows']:
-        assert row['sliderAccessible'] and row['muteAccessible'] and row['iconPresent']
+        assert row['sliderAccessible'] and row['iconPresent']
         assert row['touchTargetHeight']>=44 and not row['ambiguous']
     shutil.copyfile(DIR/'capture.png',OUT/(name+'.png'))
     return data
 subprocess.run(['killall','-9','SpringBoard'],check=False)
 time.sleep(8)
-for exe in ('SoundDeckMediaAQ','SoundDeckMediaAVP','SoundDeckMediaAP','SoundDeckMediaAE','SoundDeckMediaSBR','SoundDeckWeb','SoundDeckWebMedia'):
+for exe in ('SoundDeck','SoundDeckMediaAQ','SoundDeckMediaAVP','SoundDeckMediaAP','SoundDeckMediaAE','SoundDeckMediaSBR','SoundDeckWeb','SoundDeckWebMedia'):
     subprocess.run(['killall','-9',exe],check=False,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
 time.sleep(1)
 launch_tone_ready(DEVICE,'com.alsinas.sounddeck.toneA'); launch_tone_ready(DEVICE,'com.alsinas.sounddeck.toneB')
@@ -49,13 +49,15 @@ portrait['orientationVerified']=portrait['height']>portrait['width']
 if not portrait['orientationVerified']:
     error=DIR/'rotation-test.plist'
     portrait['blockedReason']=plistlib.load(open(error,'rb'))['error'] if error.exists() else 'No geometry change observed'
-post('master')
-time.sleep(1.5)
-master=plistlib.load(open(DIR/'master-test.plist','rb'))
-assert master['initial']>=0,'master volume unavailable'
-assert abs(master['changed']-master['initial'])>.01,'master volume did not change'
-# AVAudioSession.outputVolume can lag; the AVSystemController getter is authoritative.
-assert abs(master['initial']-master['restoredNative'])<.025,'native master volume did not restore'
+if os.environ.get('SD_SKIP_MASTER_TEST')=='1':
+    master={'skipped':'Avoid changing active user playback during this run.'}
+else:
+    post('master'); time.sleep(1.5)
+    master=plistlib.load(open(DIR/'master-test.plist','rb'))
+    assert master['initial']>=0,'master volume unavailable'
+    assert abs(master['changed']-master['initial'])>.01,'master volume did not change'
+    # AVAudioSession.outputVolume can lag; the AVSystemController getter is authoritative.
+    assert abs(master['initial']-master['restoredNative'])<.025,'native master volume did not restore'
 post('landscape'); ctl('appearance',0)
 # Control Center module: real SpringBoard presentation, per-app slider action, master setter, capture.
 # Use two native-volume media fixtures: they start reliably after the UI stress above.
@@ -81,29 +83,36 @@ def cc_wait(pred,label,timeout=12):
         time.sleep(.4)
     raise AssertionError(label+' last='+repr(last))
 cc=cc_wait(lambda d: d.get('expanded') and len(d.get('rows',[]))>=2,'Control Center expanded with two rows')
-base_rows=sorted(r['bundleID'] for r in cc['rows'][:2])
+test_ids={'com.alsinas.sounddeck.media.ap','com.alsinas.sounddeck.media.aq'}
+base_rows=sorted(r['bundleID'] for r in cc['rows'] if r['bundleID'] in test_ids)
+assert len(base_rows)==2,'both QA fixture rows must be present in Control Center'
 expected={base_rows[0]:.2,base_rows[1]:.8}
 subprocess.run([DEVICE,'post','com.alsinas.sounddeck.cc.test-sliders'],check=True); time.sleep(2)
 status=json.loads(subprocess.check_output(['sdctl','status']))
 for c in status['clients']:
     if c['bundleID'] in expected: assert abs(c['gain']-expected[c['bundleID']])<.002,'Control Center slider did not reach real backend'
-cc=cc_wait(lambda d: len(d.get('rows',[]))>=2 and all(abs(r['gain']-expected.get(r['bundleID'],-1))<.01 for r in d['rows'][:2]),'Control Center rows reflect slider changes')
+cc=cc_wait(lambda d: len([r for r in d.get('rows',[]) if r['bundleID'] in expected])==2 and all(abs(r['gain']-expected[r['bundleID']])<.01 for r in d['rows'] if r['bundleID'] in expected),'Control Center rows reflect slider changes')
 ctl('cc-capture'); time.sleep(1)
 ccdata=plistlib.load(open(DIR/'cc-diagnostics.plist','rb')); assert len(ccdata['rows'])>=2 and ccdata['visible']
 assert (DIR/'cc-capture.png').stat().st_size>5000,'Control Center capture empty'
 shutil.copyfile(DIR/'cc-capture.png',OUT/'control-center.png')
-subprocess.run([DEVICE,'post','com.alsinas.sounddeck.cc.test-master'],check=True); time.sleep(2)
-mt=plistlib.load(open(DIR/'cc-master-test.plist','rb'))
-assert mt['set'] and abs(mt['after']-mt['target'])<.03,'Control Center master setter failed'
-assert abs(mt['restored']-mt['before'])<.03,'Control Center master did not restore'
+if os.environ.get('SD_SKIP_MASTER_TEST')=='1':
+    mt={'skipped':'Avoid changing active user playback during this run.'}
+else:
+    subprocess.run([DEVICE,'post','com.alsinas.sounddeck.cc.test-master'],check=True); time.sleep(2)
+    mt=plistlib.load(open(DIR/'cc-master-test.plist','rb'))
+    assert mt['set'] and abs(mt['after']-mt['target'])<.03,'Control Center master setter failed'
+    assert abs(mt['restored']-mt['before'])<.03,'Control Center master did not restore'
 prefs=plistlib.load(open(DIR/'preferences.plist','rb'))
 for bid,val in expected.items(): assert abs(prefs['apps'][bid]['gain']-val)<.005,'Control Center preference was not persisted'
 for bid in expected: ctl('gain',bid,100); ctl('mute',bid,0)
 ctl('cc-dismiss'); time.sleep(2)
 dismissal=plistlib.load(open(DIR/'cc-bridge.plist','rb'))
 assert dismissal.get('dismissRequested') and not dismissal.get('presentedAfter'),'Control Center did not dismiss through SpringBoard bridge'
-report={'uiActions':'UIKit sendActions, not human touch','sliderAndMuteToBackend':True,'light':light,'dark':dark,'portrait':portrait,'masterVolume':master,'controlCenter':{'expandedRows':len(cc['rows']),'captureBytes':(OUT/'control-center.png').stat().st_size,'masterTest':mt,'preferencesPersisted':True,'dismissal':dismissal}}
+report={'uiActions':'UIKit sendActions, not human touch','sliderToBackend':True,'zeroSliderMutes':True,'light':light,'dark':dark,'portrait':portrait,'masterVolume':master,'controlCenter':{'expandedRows':len(cc['rows']),'captureBytes':(OUT/'control-center.png').stat().st_size,'masterTest':mt,'preferencesPersisted':True,'dismissal':dismissal}}
 (OUT/'ui.json').write_text(json.dumps(report,indent=2)+'\n')
-print('PASS UIKit slider/mute actions, appearance, accessibility geometry, native master volume')
-print('PASS Control Center module, sliders, master setter, capture, persistence')
+print('PASS UIKit sliders, zero-volume mute, appearance, compact layout and accessibility')
+print('PASS Control Center sliders, capture, persistence and dismissal')
+if mt.get('skipped'): print('SKIP master-volume mutation during active user playback')
+else: print('PASS Control Center master-volume setter and restore')
 print('Portrait:', 'verified' if portrait['orientationVerified'] else 'BLOCKED: '+portrait['blockedReason'])

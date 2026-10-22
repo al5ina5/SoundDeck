@@ -138,11 +138,11 @@
     {
       "test": "AVAudioEngine 60% PCM",
       "pass": true,
-      "inputRMS": 0.056610971236743725,
-      "outputRMS": 0.03396658274204623,
-      "ratio": 0.6,
-      "independentPostRenderRMS": 0.033997100785839625,
-      "independentBuffers": 328
+      "inputRMS": 0.05647364003967346,
+      "outputRMS": 0.03389028763256275,
+      "ratio": 0.600108,
+      "independentPostRenderRMS": 0.033951323720149536,
+      "independentBuffers": 234
     },
     {
       "test": "aq simultaneous independent gain",
@@ -193,5 +193,6 @@
       "test": "five adapters run concurrently",
       "pass": true
     }
-  ]
+  ],
+  "soundDeckVersion": "0.2.1"
 }

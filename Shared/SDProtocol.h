@@ -11,7 +11,7 @@
 #define SD_STATUS SD_DIR @"/status.plist"
 #define SD_CHANGED "com.alsinas.sounddeck.preferences"
 #define SD_GLOBAL "com.alsinas.sounddeck.global"
-#define SD_VERSION @"0.2.0"
+#define SD_VERSION @"0.2.1"
 static inline uint64_t SDGlobalState(NSDictionary *p);
 // notifyd is the cross-sandbox transport; no file access on audio threads or in clients.
 // config: gain in 0..1000, mute bit 10, enabled bit 11, mix bit 12.
