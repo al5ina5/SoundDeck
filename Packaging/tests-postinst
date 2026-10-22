@@ -1,0 +1,4 @@
+#!/var/jb/bin/sh
+set -e
+uicache -p /var/jb/Applications/SoundDeckToneA.app
+uicache -p /var/jb/Applications/SoundDeckToneB.app

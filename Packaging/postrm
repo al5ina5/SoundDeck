@@ -1,0 +1,6 @@
+#!/var/jb/bin/sh
+# Preferences intentionally retained; no user content is removed.
+if [ "$1" = remove ] || [ "$1" = purge ]; then
+  uicache -a
+fi
+exit 0

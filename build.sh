@@ -1,0 +1,57 @@
+#!/var/jb/bin/bash
+set -euo pipefail
+umask 022
+cd "$(dirname "$0")"
+SDK="${SDK:-/var/jb/usr/share/SDKs/iPhoneOS.sdk}"
+[[ -d "$SDK" ]] || { echo "Set SDK to a local iPhoneOS SDK" >&2; exit 1; }
+# Only generated staging trees owned by this build are removed.
+rm -rf build/stage build/test-stage
+mkdir -p build/stage/DEBIAN build/stage/var/jb/usr/{bin,libexec} build/stage/var/jb/Library/{LaunchDaemons,MobileSubstrate/DynamicLibraries} packages
+python3 Tools/generate-metadata.py build/stage "$@"
+CFLAGS=(-arch arm64 -mios-version-min=15.0 -isysroot "$SDK" -fobjc-arc -O2 -Wall -Wextra -Wno-unused-parameter -Wno-deprecated-declarations)
+APPFLAGS=()
+[[ " ${*} " == *" --tests "* ]] && APPFLAGS=(-DSD_TESTING=1)
+clang "${CFLAGS[@]}" "${APPFLAGS[@]}" -framework Foundation -framework UIKit -framework CoreGraphics -framework QuartzCore -framework MediaPlayer -framework AVFoundation App/main.m App/SDMasterVolume.m Shared/SDPreferences.m -o build/stage/var/jb/Applications/SoundDeck.app/SoundDeck
+clang "${CFLAGS[@]}" -framework Foundation -lproc Backend/Service.m Shared/SDPreferences.m -o build/stage/var/jb/usr/libexec/sounddeckd
+clang "${CFLAGS[@]}" -framework Foundation Tools/sdctl.m Shared/SDPreferences.m -o build/stage/var/jb/usr/bin/sdctl
+clang++ "${CFLAGS[@]}" -std=c++17 -dynamiclib -framework Foundation -framework AVFoundation -framework AudioToolbox -L/var/jb/usr/lib -lsubstrate -Wl,-rpath,/var/jb/usr/lib -Wl,-install_name,@rpath/SoundDeck.dylib Backend/Tweak.mm -o build/stage/var/jb/Library/MobileSubstrate/DynamicLibraries/SoundDeck.dylib
+# Procursus's substrate alias advertises a rootful install name. Normalize before signing.
+install_name_tool -change /usr/local/lib/libellekit.dylib @rpath/libellekit.dylib build/stage/var/jb/Library/MobileSubstrate/DynamicLibraries/SoundDeck.dylib
+clang "${CFLAGS[@]}" -framework UIKit -framework CoreGraphics Tools/Icon.m -o build/icon-generator
+ldid -Sbuild/tool-entitlements.plist build/icon-generator
+build/icon-generator build/stage/var/jb/Applications/SoundDeck.app
+ldid -Sbuild/SoundDeck-entitlements.plist build/stage/var/jb/Applications/SoundDeck.app/SoundDeck
+ldid -Sbuild/tool-entitlements.plist build/stage/var/jb/usr/libexec/sounddeckd
+ldid -Sbuild/tool-entitlements.plist build/stage/var/jb/usr/bin/sdctl
+ldid -S build/stage/var/jb/Library/MobileSubstrate/DynamicLibraries/SoundDeck.dylib
+if [[ " ${*} " == *" --tests "* ]]; then
+  clang "${CFLAGS[@]}" -framework Foundation Tools/device.m -o build/sd-device
+  ldid -Sbuild/device-entitlements.plist build/sd-device
+  for TONE in A B; do
+    FREQ=440; [[ "$TONE" == B ]] && FREQ=880
+    NAME="SoundDeckTone$TONE"
+    clang "${CFLAGS[@]}" -DSD_FREQUENCY="$FREQ" -framework UIKit -framework AVFoundation -framework AudioToolbox Tests/ToneApp.m -o "build/stage/var/jb/Applications/$NAME.app/$NAME"
+    cp build/stage/var/jb/Applications/SoundDeck.app/Icon*.png "build/stage/var/jb/Applications/$NAME.app/"
+    ldid "-Sbuild/$NAME-entitlements.plist" "build/stage/var/jb/Applications/$NAME.app/$NAME"
+  done
+  mkdir -p build/test-stage/var/jb/Applications build/test-stage/DEBIAN
+  for NAME in SoundDeckToneA SoundDeckToneB; do mv "build/stage/var/jb/Applications/$NAME.app" build/test-stage/var/jb/Applications/; done
+  cp Packaging/tests-control build/test-stage/DEBIAN/control
+  cp Packaging/tests-postinst build/test-stage/DEBIAN/postinst
+  cp Packaging/tests-prerm build/test-stage/DEBIAN/prerm
+  chmod 755 build/test-stage/DEBIAN/{postinst,prerm}
+  find build/test-stage -type d -exec chmod 755 {} +
+  find build/test-stage -type f -name '*.png' -exec chmod 644 {} +
+  dpkg-deb --root-owner-group -Zgzip -b build/test-stage packages/com.alsinas.sounddeck.tests_0.1.0_iphoneos-arm64.deb
+fi
+cp Packaging/control Packaging/postinst Packaging/prerm Packaging/postrm build/stage/DEBIAN/
+chmod 755 build/stage build/stage/DEBIAN
+chmod 644 build/stage/DEBIAN/control
+chmod 755 build/stage/DEBIAN/{postinst,prerm,postrm}
+find build/stage/var -type d -exec chmod 755 {} +
+find build/stage/var -type f -name '*.plist' -exec chmod 644 {} +
+find build/stage/var -type f -name '*.png' -exec chmod 644 {} +
+SUFFIX=""
+[[ " ${*} " == *" --tests "* ]] && SUFFIX="_qa"
+dpkg-deb --root-owner-group -Zgzip -b build/stage "packages/com.alsinas.sounddeck_0.1.0${SUFFIX}_iphoneos-arm64.deb"
+dpkg-deb -I "packages/com.alsinas.sounddeck_0.1.0${SUFFIX}_iphoneos-arm64.deb"

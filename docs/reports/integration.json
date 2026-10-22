@@ -1,0 +1,324 @@
+{
+  "device": "iPad7,5",
+  "os": "17.7.8 (21H440)",
+  "measurement": "injected final app RemoteIO callback PCM, not acoustic output",
+  "humanListeningConfirmed": false,
+  "results": [
+    {
+      "test": "concurrent independent 20/80 gain",
+      "pass": true,
+      "evidence": {
+        "com.alsinas.sounddeck.toneA": {
+          "inputRMS": 0.05641260395208667,
+          "outputRMS": 0.011276417181658656,
+          "ratio": 0.199892,
+          "active": true,
+          "independentPostRenderRMS": 0.011291676203555352,
+          "independentPostRenderBuffers": 562
+        },
+        "com.alsinas.sounddeck.toneB": {
+          "inputRMS": 0.05641260395208667,
+          "outputRMS": 0.045136186770428015,
+          "ratio": 0.800108,
+          "active": true,
+          "independentPostRenderRMS": 0.04515144579232471,
+          "independentPostRenderBuffers": 374
+        }
+      }
+    },
+    {
+      "test": "cold launch pair 1",
+      "pass": true,
+      "evidence": {
+        "com.alsinas.sounddeck.toneA": {
+          "inputRMS": 0.05653467612726024,
+          "outputRMS": 0.011306935225452048,
+          "ratio": 0.2,
+          "active": true,
+          "independentPostRenderRMS": 0.011245899137865263,
+          "independentPostRenderBuffers": 422
+        },
+        "com.alsinas.sounddeck.toneB": {
+          "inputRMS": 0.05636682688639658,
+          "outputRMS": 0.045090409704737926,
+          "ratio": 0.799946,
+          "active": true,
+          "independentPostRenderRMS": 0.0452124818799115,
+          "independentPostRenderBuffers": 280
+        }
+      }
+    },
+    {
+      "test": "cold launch pair 2",
+      "pass": true,
+      "evidence": {
+        "com.alsinas.sounddeck.toneA": {
+          "inputRMS": 0.056443121995880065,
+          "outputRMS": 0.011276417181658656,
+          "ratio": 0.199784,
+          "active": true,
+          "independentPostRenderRMS": 0.011322194247348745,
+          "independentPostRenderBuffers": 469
+        },
+        "com.alsinas.sounddeck.toneB": {
+          "inputRMS": 0.05638208590829328,
+          "outputRMS": 0.04510566872663462,
+          "ratio": 0.8,
+          "active": true,
+          "independentPostRenderRMS": 0.0452124818799115,
+          "independentPostRenderBuffers": 280
+        }
+      }
+    },
+    {
+      "test": "cold launch pair 3",
+      "pass": true,
+      "evidence": {
+        "com.alsinas.sounddeck.toneA": {
+          "inputRMS": 0.056321049820706494,
+          "outputRMS": 0.01126115815976196,
+          "ratio": 0.199946,
+          "active": true,
+          "independentPostRenderRMS": 0.011322194247348745,
+          "independentPostRenderBuffers": 469
+        },
+        "com.alsinas.sounddeck.toneB": {
+          "inputRMS": 0.056488899061570154,
+          "outputRMS": 0.045181963836118104,
+          "ratio": 0.799838,
+          "active": true,
+          "independentPostRenderRMS": 0.045426108186465246,
+          "independentPostRenderBuffers": 327
+        }
+      }
+    },
+    {
+      "test": "mute A leaves B unchanged",
+      "pass": true,
+      "evidence": {
+        "com.alsinas.sounddeck.toneA": {
+          "inputRMS": 0.05679407949950408,
+          "outputRMS": 0,
+          "ratio": 0.0,
+          "active": true,
+          "independentPostRenderRMS": 0.0,
+          "independentPostRenderBuffers": 703
+        },
+        "com.alsinas.sounddeck.toneB": {
+          "inputRMS": 0.05633630884260319,
+          "outputRMS": 0.04505989166094453,
+          "ratio": 0.799837,
+          "active": true,
+          "independentPostRenderRMS": 0.04524299992370489,
+          "independentPostRenderBuffers": 515
+        }
+      }
+    },
+    {
+      "test": "unmute restores A",
+      "pass": true,
+      "evidence": {
+        "com.alsinas.sounddeck.toneA": {
+          "inputRMS": 0.05650415808346685,
+          "outputRMS": 0.011291676203555352,
+          "ratio": 0.199838,
+          "active": true,
+          "independentPostRenderRMS": 0.011291676203555352,
+          "independentPostRenderBuffers": 937
+        },
+        "com.alsinas.sounddeck.toneB": {
+          "inputRMS": 0.056610971236743725,
+          "outputRMS": 0.04528877698939498,
+          "ratio": 0.8,
+          "active": true,
+          "independentPostRenderRMS": 0.04515144579232471,
+          "independentPostRenderBuffers": 749
+        }
+      }
+    },
+    {
+      "test": "adjust A alone",
+      "pass": true,
+      "evidence": {
+        "com.alsinas.sounddeck.toneA": {
+          "inputRMS": 0.05662623025864042,
+          "outputRMS": 0.0396429388876173,
+          "ratio": 0.700081,
+          "active": true,
+          "independentPostRenderRMS": 0.03976501106279087,
+          "independentPostRenderBuffers": 1125
+        },
+        "com.alsinas.sounddeck.toneB": {
+          "inputRMS": 0.05674830243381399,
+          "outputRMS": 0.04539559014267185,
+          "ratio": 0.799946,
+          "active": true,
+          "independentPostRenderRMS": 0.04507515068284123,
+          "independentPostRenderBuffers": 937
+        }
+      }
+    },
+    {
+      "test": "60 gain and mute cycles",
+      "pass": true,
+      "evidence": {
+        "com.alsinas.sounddeck.toneA": {
+          "inputRMS": 0.05683985656519417,
+          "outputRMS": 0.011367971313038834,
+          "ratio": 0.2,
+          "active": true,
+          "independentPostRenderRMS": 0.01126115815976196,
+          "independentPostRenderBuffers": 3515
+        },
+        "com.alsinas.sounddeck.toneB": {
+          "inputRMS": 0.05636682688639658,
+          "outputRMS": 0.045090409704737926,
+          "ratio": 0.799946,
+          "active": true,
+          "independentPostRenderRMS": 0.045426108186465246,
+          "independentPostRenderBuffers": 3327
+        }
+      }
+    },
+    {
+      "test": "terminated PID disappears from service",
+      "pass": true,
+      "automaticallyRelaunched": false
+    },
+    {
+      "test": "app relaunch restores preference",
+      "pass": true,
+      "evidence": {
+        "com.alsinas.sounddeck.toneA": {
+          "inputRMS": 0.05662623025864042,
+          "outputRMS": 0.011322194247348745,
+          "ratio": 0.199946,
+          "active": true,
+          "independentPostRenderRMS": 0.011367971313038834,
+          "independentPostRenderBuffers": 234
+        },
+        "com.alsinas.sounddeck.toneB": {
+          "inputRMS": 0.05638208590829328,
+          "outputRMS": 0.04510566872663462,
+          "ratio": 0.8,
+          "active": true,
+          "independentPostRenderRMS": 0.045136186770428015,
+          "independentPostRenderBuffers": 3796
+        }
+      }
+    },
+    {
+      "test": "both apps continue in background with mixer foreground",
+      "pass": true,
+      "evidence": {
+        "com.alsinas.sounddeck.toneA": {
+          "inputRMS": 0.05687037460898756,
+          "outputRMS": 0.011367971313038834,
+          "ratio": 0.199893,
+          "active": true,
+          "independentPostRenderRMS": 0.011367971313038834,
+          "independentPostRenderBuffers": 468
+        },
+        "com.alsinas.sounddeck.toneB": {
+          "inputRMS": 0.05676356145571069,
+          "outputRMS": 0.04541084916456855,
+          "ratio": 0.8,
+          "active": true,
+          "independentPostRenderRMS": 0.04533455405508507,
+          "independentPostRenderBuffers": 4031
+        }
+      }
+    },
+    {
+      "test": "mixer restart preserves preferences",
+      "pass": true,
+      "evidence": {
+        "com.alsinas.sounddeck.toneA": {
+          "inputRMS": 0.05647364003967346,
+          "outputRMS": 0.011291676203555352,
+          "ratio": 0.199946,
+          "active": true,
+          "independentPostRenderRMS": 0.011367971313038834,
+          "independentPostRenderBuffers": 702
+        },
+        "com.alsinas.sounddeck.toneB": {
+          "inputRMS": 0.05676356145571069,
+          "outputRMS": 0.04541084916456855,
+          "ratio": 0.8,
+          "active": true,
+          "independentPostRenderRMS": 0.04507515068284123,
+          "independentPostRenderBuffers": 4312
+        }
+      }
+    },
+    {
+      "test": "bypass restores original unity PCM gain",
+      "pass": true,
+      "evidence": {
+        "com.alsinas.sounddeck.toneA": {
+          "inputRMS": 0.056397344930189976,
+          "outputRMS": 0.056397344930189976,
+          "ratio": 1.0,
+          "active": true,
+          "independentPostRenderRMS": 0.05650415808346685,
+          "independentPostRenderBuffers": 937
+        },
+        "com.alsinas.sounddeck.toneB": {
+          "inputRMS": 0.056321049820706494,
+          "outputRMS": 0.056321049820706494,
+          "ratio": 1.0,
+          "active": true,
+          "independentPostRenderRMS": 0.056443121995880065,
+          "independentPostRenderBuffers": 4499
+        }
+      }
+    },
+    {
+      "test": "reenable and restart restores independent mix",
+      "pass": true,
+      "evidence": {
+        "com.alsinas.sounddeck.toneA": {
+          "inputRMS": 0.05685511558709087,
+          "outputRMS": 0.011367971313038834,
+          "ratio": 0.199946,
+          "active": true,
+          "independentPostRenderRMS": 0.011245899137865263,
+          "independentPostRenderBuffers": 422
+        },
+        "com.alsinas.sounddeck.toneB": {
+          "inputRMS": 0.05662623025864042,
+          "outputRMS": 0.04528877698939498,
+          "ratio": 0.799784,
+          "active": true,
+          "independentPostRenderRMS": 0.04533455405508507,
+          "independentPostRenderBuffers": 281
+        }
+      }
+    },
+    {
+      "test": "extended concurrent background playback",
+      "pass": true,
+      "evidence": {
+        "com.alsinas.sounddeck.toneA": {
+          "inputRMS": 0.05683985656519417,
+          "outputRMS": 0.011367971313038834,
+          "ratio": 0.2,
+          "active": true,
+          "independentPostRenderRMS": 0.011306935225452048,
+          "independentPostRenderBuffers": 9703
+        },
+        "com.alsinas.sounddeck.toneB": {
+          "inputRMS": 0.05638208590829328,
+          "outputRMS": 0.04510566872663462,
+          "ratio": 0.8,
+          "active": true,
+          "independentPostRenderRMS": 0.04538033112077516,
+          "independentPostRenderBuffers": 9609
+        }
+      },
+      "durationSeconds": 198.8,
+      "serviceCPUPercentOneCore": 1.364,
+      "servicePeakRSSBytes": 5767168
+    }
+  ]
+}

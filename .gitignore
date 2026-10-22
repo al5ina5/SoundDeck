@@ -1,0 +1,6 @@
+build/
+packages/
+.DS_Store
+Tests/results-local/
+__pycache__/
+*.pyc

@@ -1,0 +1,101 @@
+{
+  "uiActions": "UIKit sendActions, not human touch",
+  "sliderAndMuteToBackend": true,
+  "light": {
+    "height": 768.0,
+    "phase": "captured",
+    "rows": [
+      {
+        "ambiguous": false,
+        "bundleID": "com.alsinas.sounddeck.toneB",
+        "gain": 0.800000011920929,
+        "iconPresent": 1,
+        "muteAccessible": 1,
+        "muted": false,
+        "sliderAccessible": 1,
+        "touchTargetHeight": 44.0
+      },
+      {
+        "ambiguous": false,
+        "bundleID": "com.alsinas.sounddeck.toneA",
+        "gain": 0.20000000298023224,
+        "iconPresent": 1,
+        "muteAccessible": 1,
+        "muted": false,
+        "sliderAccessible": 1,
+        "touchTargetHeight": 44.0
+      }
+    ],
+    "state": 0,
+    "style": 1,
+    "width": 1024.0
+  },
+  "dark": {
+    "height": 768.0,
+    "phase": "captured",
+    "rows": [
+      {
+        "ambiguous": false,
+        "bundleID": "com.alsinas.sounddeck.toneB",
+        "gain": 0.800000011920929,
+        "iconPresent": 1,
+        "muteAccessible": 1,
+        "muted": false,
+        "sliderAccessible": 1,
+        "touchTargetHeight": 44.0
+      },
+      {
+        "ambiguous": false,
+        "bundleID": "com.alsinas.sounddeck.toneA",
+        "gain": 0.20000000298023224,
+        "iconPresent": 1,
+        "muteAccessible": 1,
+        "muted": false,
+        "sliderAccessible": 1,
+        "touchTargetHeight": 44.0
+      }
+    ],
+    "state": 0,
+    "style": 2,
+    "width": 1024.0
+  },
+  "portrait": {
+    "height": 768.0,
+    "phase": "captured",
+    "rows": [
+      {
+        "ambiguous": false,
+        "bundleID": "com.alsinas.sounddeck.toneB",
+        "gain": 0.800000011920929,
+        "iconPresent": 1,
+        "muteAccessible": 1,
+        "muted": false,
+        "sliderAccessible": 1,
+        "touchTargetHeight": 44.0
+      },
+      {
+        "ambiguous": false,
+        "bundleID": "com.alsinas.sounddeck.toneA",
+        "gain": 0.20000000298023224,
+        "iconPresent": 1,
+        "muteAccessible": 1,
+        "muted": false,
+        "sliderAccessible": 1,
+        "touchTargetHeight": 44.0
+      }
+    ],
+    "state": 0,
+    "style": 2,
+    "width": 1024.0,
+    "orientationVerified": false,
+    "blockedReason": "The current windowing mode does not allow for programmatic changes to interface orientation."
+  },
+  "masterVolume": {
+    "changed": 0.05000000074505806,
+    "initial": 0.0625,
+    "method": "UIKit slider action to AVSystemController; measured with AVAudioSession.outputVolume",
+    "requested": 0.03125,
+    "restored": 0.05000000074505806,
+    "restoredNative": 0.0625
+  }
+}

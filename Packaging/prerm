@@ -1,0 +1,16 @@
+#!/var/jb/bin/sh
+set -e
+if [ "$1" = upgrade ]; then
+  mkdir -p /var/jb/var/lib/sounddeck
+  chmod 700 /var/jb/var/lib/sounddeck
+  if su mobile -c '/var/jb/usr/bin/sdctl is-disabled'; then
+    rm -f /var/jb/var/lib/sounddeck/re-enable
+  else
+    touch /var/jb/var/lib/sounddeck/re-enable
+  fi
+fi
+# First restore original gains while service and injection are still present.
+su mobile -c '/var/jb/usr/bin/sdctl disable' 2>/dev/null || true
+sleep 2
+launchctl bootout system/com.alsinas.sounddeck 2>/dev/null || true
+exit 0

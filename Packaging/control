@@ -1,0 +1,9 @@
+Package: com.alsinas.sounddeck
+Name: SoundDeck
+Version: 0.1.0
+Architecture: iphoneos-arm64
+Description: Experimental native per-app audio mixer with opt-in RemoteIO and AVPlayer hooks.
+Maintainer: Sebastian Alsina <alsinas@me.com>
+Author: Sebastian Alsina
+Section: Multimedia
+Depends: firmware (>= 15.0), ellekit, uikittools

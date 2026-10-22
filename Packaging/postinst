@@ -1,0 +1,16 @@
+#!/var/jb/bin/sh
+set -e
+mkdir -p /var/mobile/Library/SoundDeck
+chown mobile:mobile /var/mobile/Library/SoundDeck
+chmod 700 /var/mobile/Library/SoundDeck
+launchctl bootout system/com.alsinas.sounddeck 2>/dev/null || true
+su mobile -c 'rm -f /var/mobile/Library/SoundDeck/status.plist'
+launchctl bootstrap system /var/jb/Library/LaunchDaemons/com.alsinas.sounddeck.plist
+if [ -f /var/jb/var/lib/sounddeck/re-enable ]; then
+  su mobile -c '/var/jb/usr/bin/sdctl enable'
+  rm -f /var/jb/var/lib/sounddeck/re-enable
+fi
+uicache -p /var/jb/Applications/SoundDeck.app
+for app in SoundDeckToneA SoundDeckToneB; do
+  if [ -d "/var/jb/Applications/$app.app" ]; then uicache -p "/var/jb/Applications/$app.app"; fi
+done

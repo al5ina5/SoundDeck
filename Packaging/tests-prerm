@@ -1,0 +1,5 @@
+#!/var/jb/bin/sh
+killall SoundDeckToneA SoundDeckToneB 2>/dev/null || true
+uicache -u /var/jb/Applications/SoundDeckToneA.app
+uicache -u /var/jb/Applications/SoundDeckToneB.app
+exit 0
