@@ -11,7 +11,7 @@ mkdir -p build/stage/DEBIAN build/stage/var/jb/usr/{bin,libexec} build/stage/var
 python3 Tools/generate-metadata.py build/stage "$@"
 CFLAGS=(-arch arm64 -mios-version-min=15.0 -isysroot "$SDK" -fobjc-arc -O2 -Wall -Wextra -Wno-unused-parameter -Wno-deprecated-declarations)
 APPFLAGS=()
-[[ " ${*} " == *" --tests "* ]] && APPFLAGS=(-DSD_TESTING=1)
+[[ " ${*:-} " == *" --tests "* ]] && APPFLAGS=(-DSD_TESTING=1)
 clang "${CFLAGS[@]}" "${APPFLAGS[@]}" -framework Foundation -framework UIKit -framework CoreGraphics -framework QuartzCore -framework MediaPlayer -framework AVFoundation App/main.m App/SDMasterVolume.m Shared/SDMixerRow.m Shared/SDPreferences.m Tools/SDControlCenterConfig.m -o build/stage/var/jb/Applications/SoundDeck.app/SoundDeck
 clang "${CFLAGS[@]}" -framework Foundation -lproc Backend/Service.m Shared/SDPreferences.m -o build/stage/var/jb/usr/libexec/sounddeckd
 clang "${CFLAGS[@]}" -framework Foundation Tools/sdctl.m Tools/SDControlCenterConfig.m Shared/SDPreferences.m -o build/stage/var/jb/usr/bin/sdctl
@@ -39,7 +39,7 @@ ldid -S build/stage/var/jb/Library/MobileSubstrate/DynamicLibraries/SoundDeck.dy
 ldid -S build/stage/var/jb/Library/MobileSubstrate/DynamicLibraries/SoundDeckWebKit.dylib
 ldid -S build/stage/var/jb/Library/MobileSubstrate/DynamicLibraries/SoundDeckControlCenter.dylib
 ldid -S build/stage/var/jb/Library/ControlCenter/Bundles/SoundDeck.bundle/SoundDeckCC
-if [[ " ${*} " == *" --tests "* ]]; then
+if [[ " ${*:-} " == *" --tests "* ]]; then
   clang "${CFLAGS[@]}" -framework Foundation Tools/device.m -o build/sd-device
   ldid -Sbuild/device-entitlements.plist build/sd-device
   for TONE in A B; do
@@ -79,6 +79,6 @@ find build/stage/var -type d -exec chmod 755 {} +
 find build/stage/var -type f -name '*.plist' -exec chmod 644 {} +
 find build/stage/var -type f -name '*.png' -exec chmod 644 {} +
 SUFFIX=""
-[[ " ${*} " == *" --tests "* ]] && SUFFIX="_qa"
+[[ " ${*:-} " == *" --tests "* ]] && SUFFIX="_qa"
 dpkg-deb --root-owner-group -Zgzip -b build/stage "packages/com.alsinas.sounddeck_0.2.2${SUFFIX}_iphoneos-arm64.deb"
 dpkg-deb -I "packages/com.alsinas.sounddeck_0.2.2${SUFFIX}_iphoneos-arm64.deb"
