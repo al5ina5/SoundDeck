@@ -1,0 +1,33 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g. v0.2.3)"
+        required: true
+      publish:
+        description: "Create the release and update the APT repo"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    uses: repos1tory/repos1tory.github.io/.github/workflows/publish-tweak.yml@main
+    with:
+      tag: ${{ github.event.inputs.tag || github.ref_name }}
+      publish: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.publish == 'true' }}
+      build_command: |
+        brew list ldid >/dev/null 2>&1 || brew install ldid
+        brew list dpkg >/dev/null 2>&1 || brew install dpkg
+        SKIP_ICON_GEN=1 LIBS="$THEOS/vendor/lib" \
+          SDK="$(xcrun --sdk iphoneos --show-sdk-path)" bash build.sh
+      deb_glob: "packages/com.alsinas.sounddeck_*.deb"
+      group: tweaks
+      theos: true
+    secrets: inherit
