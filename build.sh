@@ -3,6 +3,7 @@ set -euo pipefail
 umask 022
 cd "$(dirname "$0")"
 SDK="${SDK:-/var/jb/usr/share/SDKs/iPhoneOS.sdk}"
+LIBS="${LIBS:-/var/jb/usr/lib}"
 [[ -d "$SDK" ]] || { echo "Set SDK to a local iPhoneOS SDK" >&2; exit 1; }
 # Only generated staging trees owned by this build are removed.
 rm -rf build/stage build/test-stage
@@ -16,14 +17,19 @@ clang "${CFLAGS[@]}" -framework Foundation -lproc Backend/Service.m Shared/SDPre
 clang "${CFLAGS[@]}" -framework Foundation Tools/sdctl.m Tools/SDControlCenterConfig.m Shared/SDPreferences.m -o build/stage/var/jb/usr/bin/sdctl
 clang "${CFLAGS[@]}" -bundle -framework Foundation -framework UIKit -framework CoreGraphics -framework QuartzCore -framework AVFoundation -framework MediaPlayer "${APPFLAGS[@]}" ControlCenter/SDControlCenter.m Shared/SDMixerRow.m Shared/SDPreferences.m App/SDMasterVolume.m -o build/stage/var/jb/Library/ControlCenter/Bundles/SoundDeck.bundle/SoundDeckCC
 clang "${CFLAGS[@]}" "${APPFLAGS[@]}" -dynamiclib -framework Foundation -framework UIKit ControlCenter/SDBridge.m -o build/stage/var/jb/Library/MobileSubstrate/DynamicLibraries/SoundDeckControlCenter.dylib
-clang++ "${CFLAGS[@]}" "${APPFLAGS[@]}" -std=c++17 -dynamiclib -framework Foundation -framework AVFoundation -framework AudioToolbox -framework CoreMedia -L/var/jb/usr/lib -lsubstrate -Wl,-rpath,/var/jb/usr/lib -Wl,-install_name,@rpath/SoundDeck.dylib Backend/Runtime.mm -o build/stage/var/jb/Library/MobileSubstrate/DynamicLibraries/SoundDeck.dylib
-clang++ "${CFLAGS[@]}" "${APPFLAGS[@]}" -DSD_WEBKIT_AGENT=1 -std=c++17 -dynamiclib -framework Foundation -framework AVFoundation -framework AudioToolbox -framework CoreMedia -L/var/jb/usr/lib -lsubstrate -Wl,-rpath,/var/jb/usr/lib -Wl,-install_name,@rpath/SoundDeckWebKit.dylib Backend/Runtime.mm -o build/stage/var/jb/Library/MobileSubstrate/DynamicLibraries/SoundDeckWebKit.dylib
+clang++ "${CFLAGS[@]}" "${APPFLAGS[@]}" -std=c++17 -dynamiclib -framework Foundation -framework AVFoundation -framework AudioToolbox -framework CoreMedia -L"$LIBS" -lsubstrate -Wl,-rpath,/var/jb/usr/lib -Wl,-install_name,@rpath/SoundDeck.dylib Backend/Runtime.mm -o build/stage/var/jb/Library/MobileSubstrate/DynamicLibraries/SoundDeck.dylib
+clang++ "${CFLAGS[@]}" "${APPFLAGS[@]}" -DSD_WEBKIT_AGENT=1 -std=c++17 -dynamiclib -framework Foundation -framework AVFoundation -framework AudioToolbox -framework CoreMedia -L"$LIBS" -lsubstrate -Wl,-rpath,/var/jb/usr/lib -Wl,-install_name,@rpath/SoundDeckWebKit.dylib Backend/Runtime.mm -o build/stage/var/jb/Library/MobileSubstrate/DynamicLibraries/SoundDeckWebKit.dylib
 # Procursus's substrate alias advertises a rootful install name. Normalize before signing.
 install_name_tool -change /usr/local/lib/libellekit.dylib @rpath/libellekit.dylib build/stage/var/jb/Library/MobileSubstrate/DynamicLibraries/SoundDeck.dylib
 install_name_tool -change /usr/local/lib/libellekit.dylib @rpath/libellekit.dylib build/stage/var/jb/Library/MobileSubstrate/DynamicLibraries/SoundDeckWebKit.dylib
-clang "${CFLAGS[@]}" -framework UIKit -framework CoreGraphics Tools/Icon.m -o build/icon-generator
-ldid -Sbuild/tool-entitlements.plist build/icon-generator
-build/icon-generator build/stage/var/jb/Applications/SoundDeck.app
+if [[ "${SKIP_ICON_GEN:-0}" == "1" ]]; then
+  # CI has no UIKit host runtime; reuse the icons committed in Packaging/icons.
+  cp Packaging/icons/Icon*.png build/stage/var/jb/Applications/SoundDeck.app/
+else
+  clang "${CFLAGS[@]}" -framework UIKit -framework CoreGraphics Tools/Icon.m -o build/icon-generator
+  ldid -Sbuild/tool-entitlements.plist build/icon-generator
+  build/icon-generator build/stage/var/jb/Applications/SoundDeck.app
+fi
 cp build/stage/var/jb/Applications/SoundDeck.app/Icon60@2x.png build/stage/var/jb/Library/ControlCenter/Bundles/SoundDeck.bundle/SettingsIcon@2x.png
 cp build/stage/var/jb/Applications/SoundDeck.app/Icon60@3x.png build/stage/var/jb/Library/ControlCenter/Bundles/SoundDeck.bundle/SettingsIcon@3x.png
 ldid -Sbuild/SoundDeck-entitlements.plist build/stage/var/jb/Applications/SoundDeck.app/SoundDeck
